@@ -43,10 +43,10 @@ export default {
       nicknamePlaceholder: 'Please input nickname',
       register: 'Create an account',
       continue: 'Continue',
-      title: 'Start building your smart assistants.',
+      title: 'Digitalize any Real Estate Knowledge, Empower with Generative AI.',
       description:
-        'Sign up for free to explore top RAG technology. Create knowledge bases and AIs to empower your business.',
-      review: 'from 500+ reviews',
+        'Sign up for free to explore the top RAG technology for real estate. Create knowledge bases and AIs to empower your business.',
+      review: '',
     },
     header: {
       knowledgeBase: 'Knowledge Base',
@@ -54,8 +54,8 @@ export default {
       register: 'Register',
       signin: 'Sign in',
       home: 'Home',
-      setting: '用户设置',
-      logout: '登出',
+      setting: 'User Settings',
+      logout: 'Sign Out',
       fileManager: 'File Management',
       flow: 'Agent',
     },
@@ -94,7 +94,7 @@ export default {
       processDuration: 'Process Duration',
       progressMsg: 'Progress Msg',
       testingDescription:
-        'Final step! After success, leave the rest to Infiniflow AI.',
+        'Final step! After success, leave the rest to PropertyBrain AI.',
       similarityThreshold: 'Similarity threshold',
       similarityThresholdTip:
         "We use hybrid similarity score to evaluate distance between two lines of text. It's weighted keywords similarity and vector cosine similarity. If the similarity between query and chunk is less than this threshold, the chunk will be filtered out.",
