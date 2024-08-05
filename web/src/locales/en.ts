@@ -46,7 +46,7 @@ export default {
       title: 'Digitalize any Real Estate Knowledge, Empower with Generative AI.',
       description:
         'Sign up for free to explore the top RAG technology for real estate. Create knowledge bases and AIs to empower your business.',
-      review: '',
+      review: 'Data Scientists and Domain Experts Review',
     },
     header: {
       knowledgeBase: 'Knowledge Base',
