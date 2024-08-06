@@ -9,6 +9,11 @@ services:
         condition: service_healthy
       es01:
         condition: service_healthy
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        RAGFLOW_VERSION: ${RAGFLOW_VERSION}
     image: infiniflow/ragflow:${RAGFLOW_VERSION}
     container_name: ragflow-server
     ports:
