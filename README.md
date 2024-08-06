@@ -201,13 +201,13 @@ When it comes to system configurations, you will need to manage the following fi
 
 - [.env](./docker/.env): Keeps the fundamental setups for the system, such as `SVR_HTTP_PORT`, `MYSQL_PASSWORD`, and `MINIO_PASSWORD`.
 - [service_conf.yaml](./docker/service_conf.yaml): Configures the back-end services.
-- [docker-compose.yml](./docker/docker-compose.yml): The system relies on [docker-compose.yml](./docker/docker-compose.yml) to start up.
+- [docker-compose.yml](./docker/ragkl-docker-compose.yml): The system relies on [docker-compose.yml](./docker/ragkl-docker-compose.yml) to start up.
 
 You must ensure that changes to the [.env](./docker/.env) file are in line with what are in the [service_conf.yaml](./docker/service_conf.yaml) file.
 
 > The [./docker/README](./docker/README.md) file provides a detailed description of the environment settings and service configurations, and you are REQUIRED to ensure that all environment settings listed in the [./docker/README](./docker/README.md) file are aligned with the corresponding configurations in the [service_conf.yaml](./docker/service_conf.yaml) file.
 
-To update the default HTTP serving port (80), go to [docker-compose.yml](./docker/docker-compose.yml) and change `80:80` to `<YOUR_SERVING_PORT>:80`.
+To update the default HTTP serving port (80), go to [docker-compose.yml](./docker/ragkl-docker-compose.yml) and change `80:80` to `<YOUR_SERVING_PORT>:80`.
 
 > Updates to all system configurations require a system reboot to take effect:
 >
