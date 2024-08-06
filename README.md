@@ -1,8 +1,4 @@
-<div align="center">
-<a href="https://demo.ragflow.io/">
-<img src="web/src/assets/logo-with-text.png" width="520" alt="ragflow logo">
-</a>
-</div>
+span
 
 <p align="center">
   <a href="./README.md">English</a> |
@@ -33,7 +29,7 @@
 
 <details open>
 <summary></b>📕 Table of Contents</b></summary>
-  
+
 - 💡 [What is RAGFlow?](#-what-is-ragflow)
 - 🎮 [Demo](#-demo)
 - 📌 [Latest Updates](#-latest-updates)
@@ -57,25 +53,21 @@
 ## 🎮 Demo
 
 Try our demo at [https://demo.ragflow.io](https://demo.ragflow.io).
+
 <div align="center" style="margin-top:20px;margin-bottom:20px;">
 <img src="https://github.com/infiniflow/ragflow/assets/7248/2f6baa3e-1092-4f11-866d-36f6a9d075e5" width="1200"/>
 <img src="https://github.com/infiniflow/ragflow/assets/12318111/b083d173-dadc-4ea9-bdeb-180d7df514eb" width="1200"/>
 </div>
 
-
 ## 🔥 Latest Updates
 
 - 2024-08-02 Supports GraphRAG inspired by [graphrag](https://github.com/microsoft/graphrag) , and mind map.
-  
 - 2024-07-23 Supports audio file parsing.
-
 - 2024-07-21 Supports more LLMs (LocalAI, OpenRouter, StepFun, and Nvidia).
-
 - 2024-07-18 Adds more components (Wikipedia, PubMed, Baidu, and Duckduckgo) to the graph.
-
 - 2024-07-08 Supports workflow based on [Graph](./graph/README.md).
-- 2024-06-27 Supports Markdown and Docx in the Q&A parsing method. 
-- 2024-06-27 Supports extracting images from Docx files. 
+- 2024-06-27 Supports Markdown and Docx in the Q&A parsing method.
+- 2024-06-27 Supports extracting images from Docx files.
 - 2024-06-27 Supports extracting tables from Markdown files.
 - 2024-06-06 Supports [Self-RAG](https://huggingface.co/papers/2310.11511), which is enabled by default in dialog settings.
 - 2024-05-30 Integrates [BCE](https://github.com/netease-youdao/BCEmbedding) and [BGE](https://github.com/FlagOpen/FlagEmbedding) reranker models.
@@ -125,6 +117,7 @@ Try our demo at [https://demo.ragflow.io](https://demo.ragflow.io).
 - Disk >= 50 GB
 - Docker >= 24.0.0 & Docker Compose >= v2.26.1
   > If you have not installed Docker on your local machine (Windows, Mac, or Linux), see [Install Docker Engine](https://docs.docker.com/engine/install/).
+  >
 
 ### 🚀 Start up the server
 
@@ -148,26 +141,25 @@ Try our demo at [https://demo.ragflow.io](https://demo.ragflow.io).
    > ```bash
    > vm.max_map_count=262144
    > ```
-
+   >
 2. Clone the repo:
 
    ```bash
    $ git clone https://github.com/infiniflow/ragflow.git
    ```
-
 3. Build the pre-built Docker images and start up the server:
 
    > Running the following commands automatically downloads the *dev* version RAGFlow Docker image. To download and run a specified Docker version, update `RAGFLOW_VERSION` in **docker/.env** to the intended version, for example `RAGFLOW_VERSION=v0.8.0`, before running the following commands.
+   >
 
    ```bash
    $ cd ragflow/docker
    $ chmod +x ./entrypoint.sh
    $ docker compose up -d
    ```
-   
 
    > The core image is about 9 GB in size and may take a while to load.
-
+   >
 4. Check the server status after having the server up and running:
 
    ```bash
@@ -189,13 +181,17 @@ Try our demo at [https://demo.ragflow.io](https://demo.ragflow.io).
     * Running on http://x.x.x.x:9380
     INFO:werkzeug:Press CTRL+C to quit
    ```
-   > If you skip this confirmation step and directly log in to RAGFlow, your browser may prompt a `network anomaly` error because, at that moment, your RAGFlow may not be fully initialized.  
 
+   > If you skip this confirmation step and directly log in to RAGFlow, your browser may prompt a `network anomaly` error because, at that moment, your RAGFlow may not be fully initialized.
+   >
 5. In your web browser, enter the IP address of your server and log in to RAGFlow.
+
    > With the default settings, you only need to enter `http://IP_OF_YOUR_MACHINE` (**sans** port number) as the default HTTP serving port `80` can be omitted when using the default configurations.
+   >
 6. In [service_conf.yaml](./docker/service_conf.yaml), select the desired LLM factory in `user_default_llm` and update the `API_KEY` field with the corresponding API key.
 
    > See [llm_api_key_setup](https://ragflow.io/docs/dev/llm_api_key_setup) for more information.
+   >
 
    _The show is now on!_
 
@@ -236,13 +232,12 @@ $ docker compose up -d
 
 To launch the service from source:
 
-1. Clone the repository: 
+1. Clone the repository:
 
    ```bash
    $ git clone https://github.com/infiniflow/ragflow.git
    $ cd ragflow/
    ```
-
 2. Create a virtual environment, ensuring that Anaconda or Miniconda is installed:
 
    ```bash
@@ -250,13 +245,12 @@ To launch the service from source:
    $ conda activate ragflow
    $ pip install -r requirements.txt
    ```
-   
+
    ```bash
    # If your CUDA version is higher than 12.0, run the following additional commands:
    $ pip uninstall -y onnxruntime-gpu
    $ pip install onnxruntime-gpu --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
    ```
-
 3. Copy the entry script and configure environment variables:
 
    ```bash
@@ -265,7 +259,7 @@ To launch the service from source:
    # Get the ragflow project path:
    $ pwd
    ```
-   
+
    ```bash
    $ cp docker/entrypoint.sh .
    $ vi entrypoint.sh
@@ -281,26 +275,22 @@ To launch the service from source:
    export PYTHONPATH=${PYTHONPATH}
    export HF_ENDPOINT=https://hf-mirror.com
    ```
-
 4. Launch the third-party services (MinIO, Elasticsearch, Redis, and MySQL):
 
    ```bash
    $ cd docker
    $ docker compose -f docker-compose-base.yml up -d 
    ```
-
 5. Check the configuration files, ensuring that:
 
-   - The settings in **docker/.env** match those in **conf/service_conf.yaml**. 
+   - The settings in **docker/.env** match those in **conf/service_conf.yaml**.
    - The IP addresses and ports for related services in **service_conf.yaml** match the local machine IP and ports exposed by the container.
-
 6. Launch the RAGFlow backend service:
 
    ```bash
    $ chmod +x ./entrypoint.sh
    $ bash ./entrypoint.sh
    ```
-
 7. Launch the frontend service:
 
    ```bash
@@ -310,7 +300,6 @@ To launch the service from source:
    # Update proxy.target to http://127.0.0.1:9380
    $ npm run dev 
    ```
-
 8. Deploy the frontend service:
 
    ```bash
