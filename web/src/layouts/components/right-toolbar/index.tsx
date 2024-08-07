@@ -19,7 +19,8 @@ const Circle = ({ children, ...restProps }: React.PropsWithChildren) => {
 };
 
 const handleGithubCLick = () => {
-  window.open('https://github.com/infiniflow/ragflow', 'target');
+  // window.open('https://github.com/infiniflow/ragflow', 'target');
+  window.open('https://ar-gai-agent.eapdenonprd.realogydev.com/', 'target');
 };
 
 const RightToolBar = () => {
