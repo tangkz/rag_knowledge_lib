@@ -46,7 +46,7 @@ export default {
       title: 'Generative AI for R.E. Knowledge',
       description:
         'Sign up for free to explore the top RAG technology for real estate. Create knowledge bases and AIs to empower your business.',
-      review: 'Data Scientists and Domain Experts Review',
+      review: 'Data Scientists and Domain Experts Reviewed',
     },
     header: {
       knowledgeBase: 'Knowledge Base',
