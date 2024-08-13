@@ -20,10 +20,16 @@ export const IconMap = {
   OpenRouter: 'open-router',
   LocalAI: 'local-ai',
   StepFun: 'stepfun',
-  NVIDIA:'nvidia',
-  'LM-Studio':'lm-studio',
-  'OpenAI-API-Compatible':'openai-api',
-  'cohere':'cohere'
+  NVIDIA: 'nvidia',
+  'LM-Studio': 'lm-studio',
+  'OpenAI-API-Compatible': 'openai-api',
+  cohere: 'cohere',
+  Lepton: 'lepton',
+  TogetherAI: 'together-ai',
+  PerfXCloud: 'perfx-cloud',
+  Upstage: 'upstage',
+  'novita.ai': 'novita-ai',
+  SILICONFLOW: 'siliconflow',
 };
 
 export const BedrockRegionList = [

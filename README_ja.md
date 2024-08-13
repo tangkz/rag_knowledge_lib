@@ -182,13 +182,13 @@
 
 - [.env](./docker/.env): `SVR_HTTP_PORT`、`MYSQL_PASSWORD`、`MINIO_PASSWORD` などのシステムの基本設定を保持する。
 - [service_conf.yaml](./docker/service_conf.yaml): バックエンドのサービスを設定します。
-- [docker-compose.yml](./docker/ragkl-docker-compose.yml): システムの起動は [docker-compose.yml](./docker/ragkl-docker-compose.yml) に依存している。
+- [docker-compose.yml](./docker/docker-compose.yml): システムの起動は [docker-compose.yml](./docker/docker-compose.yml) に依存している。
 
 [.env](./docker/.env) ファイルの変更が [service_conf.yaml](./docker/service_conf.yaml) ファイルの内容と一致していることを確認する必要があります。
 
 > [./docker/README](./docker/README.md) ファイルは環境設定とサービスコンフィグの詳細な説明を提供し、[./docker/README](./docker/README.md) ファイルに記載されている全ての環境設定が [service_conf.yaml](./docker/service_conf.yaml) ファイルの対応するコンフィグと一致していることを確認することが義務付けられています。
 
-デフォルトの HTTP サービングポート(80)を更新するには、[docker-compose.yml](./docker/ragkl-docker-compose.yml) にアクセスして、`80:80` を `<YOUR_SERVING_PORT>:80` に変更します。
+デフォルトの HTTP サービングポート(80)を更新するには、[docker-compose.yml](./docker/docker-compose.yml) にアクセスして、`80:80` を `<YOUR_SERVING_PORT>:80` に変更します。
 
 > すべてのシステム設定のアップデートを有効にするには、システムの再起動が必要です:
 >
@@ -203,7 +203,7 @@
 ```bash
 $ git clone https://github.com/infiniflow/ragflow.git
 $ cd ragflow/
-$ docker build -t infiniflow/ragflow:v0.8.0 .
+$ docker build -t infiniflow/ragflow:v0.9.0 .
 $ cd ragflow/docker
 $ chmod +x ./entrypoint.sh
 $ docker compose up -d

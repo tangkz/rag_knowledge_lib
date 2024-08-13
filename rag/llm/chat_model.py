@@ -71,8 +71,8 @@ class Base(ABC):
                         total_tokens
                         + num_tokens_from_string(resp.choices[0].delta.content)
                     )
-                    if not hasattr(resp, "usage")
-                    else resp.usage["total_tokens"]
+                    if not hasattr(resp, "usage") or not resp.usage
+                    else resp.usage.get("total_tokens",total_tokens)
                 )
                 if resp.choices[0].finish_reason == "length":
                     ans += "...\nFor the content length reason, it stopped, continue?" if is_english(
@@ -981,3 +981,45 @@ class CoHereChat(Base):
             yield ans + "\n**ERROR**: " + str(e)
 
         yield total_tokens
+
+
+class LeptonAIChat(Base):
+    def __init__(self, key, model_name, base_url=None):
+        if not base_url:
+            base_url = os.path.join("https://"+model_name+".lepton.run","api","v1")
+        super().__init__(key, model_name, base_url)
+
+
+class TogetherAIChat(Base):
+    def __init__(self, key, model_name, base_url="https://api.together.xyz/v1"):
+        if not base_url:
+            base_url = "https://api.together.xyz/v1"
+        super().__init__(key, model_name, base_url)
+
+      
+class PerfXCloudChat(Base):
+    def __init__(self, key, model_name, base_url="https://cloud.perfxlab.cn/v1"):
+        if not base_url:
+            base_url = "https://cloud.perfxlab.cn/v1"
+        super().__init__(key, model_name, base_url)
+
+
+class UpstageChat(Base):
+    def __init__(self, key, model_name, base_url="https://api.upstage.ai/v1/solar"):
+        if not base_url:
+            base_url = "https://api.upstage.ai/v1/solar"
+        super().__init__(key, model_name, base_url)
+
+
+class NovitaAIChat(Base):
+    def __init__(self, key, model_name, base_url="https://api.novita.ai/v3/openai"):
+        if not base_url:
+            base_url = "https://api.novita.ai/v3/openai"
+        super().__init__(key, model_name, base_url)
+
+
+class SILICONFLOWChat(Base):
+    def __init__(self, key, model_name, base_url="https://api.siliconflow.cn/v1"):
+        if not base_url:
+            base_url = "https://api.siliconflow.cn/v1"
+        super().__init__(key, model_name, base_url)
