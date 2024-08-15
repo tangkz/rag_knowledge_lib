@@ -32,7 +32,7 @@ from api.settings import RetCode, GITHUB_OAUTH, FEISHU_OAUTH, CHAT_MDL, EMBEDDIN
 from api.db.services.user_service import UserService, TenantService, UserTenantService
 from api.db.services.file_service import FileService
 from api.settings import stat_logger
-from api.utils.api_utils import get_json_result, cors_reponse
+from api.utils.api_utils import get_json_result, construct_response
 
 
 @manager.route('/login', methods=['POST', 'GET'])
@@ -64,7 +64,7 @@ def login():
         user.update_date = datetime_format(datetime.now()),
         user.save()
         msg = "Welcome back!"
-        return cors_reponse(data=response_data, auth=user.get_id(), retmsg=msg)
+        return construct_response(data=response_data, auth=user.get_id(), retmsg=msg)
     else:
         return get_json_result(data=False, retcode=RetCode.AUTHENTICATION_ERROR,
                                retmsg='Email and Password do not match!')
@@ -332,17 +332,27 @@ def user_register(user_id, user):
 @validate_request("nickname", "email", "password")
 def user_add():
     req = request.json
-    if UserService.query(email=req["email"]):
-        return get_json_result(
-            data=False, retmsg=f'Email: {req["email"]} has already registered!', retcode=RetCode.OPERATING_ERROR)
-    if not re.match(r"^[\w\._-]+@([\w_-]+\.)+[\w-]{2,4}$", req["email"]):
-        return get_json_result(data=False, retmsg=f'Invaliad e-mail: {req["email"]}!',
+    email_address = req["email"]
+
+    # Validate the email address
+    if not re.match(r"^[\w\._-]+@([\w_-]+\.)+[\w-]{2,4}$", email_address):
+        return get_json_result(data=False,
+                               retmsg=f'Invalid Email address: {email_address}!',
                                retcode=RetCode.OPERATING_ERROR)
 
+    # Check if the email address is already used
+    if UserService.query(email=email_address):
+        return get_json_result(
+            data=False,
+            retmsg=f'Email: {email_address} has already registered!',
+            retcode=RetCode.OPERATING_ERROR)
+
+    # Construct user info data
+    nickname = req["nickname"]
     user_dict = {
         "access_token": get_uuid(),
-        "email": req["email"],
-        "nickname": req["nickname"],
+        "email": email_address,
+        "nickname": nickname,
         "password": decrypt(req["password"]),
         "login_channel": "password",
         "last_login_time": get_format_time(),
@@ -353,18 +363,20 @@ def user_add():
     try:
         users = user_register(user_id, user_dict)
         if not users:
-            raise Exception('Register user failure.')
+            raise Exception(f'Fail to register {email_address}.')
         if len(users) > 1:
-            raise Exception('Same E-mail exist!')
+            raise Exception(f'Same E-mail: {email_address} exists!')
         user = users[0]
         login_user(user)
-        return cors_reponse(data=user.to_json(),
-                            auth=user.get_id(), retmsg="Welcome aboard!")
+        return construct_response(data=user.to_json(),
+                                  auth=user.get_id(),
+                                  retmsg=f"{nickname}, welcome aboard!")
     except Exception as e:
         rollback_user_registration(user_id)
         stat_logger.exception(e)
-        return get_json_result(
-            data=False, retmsg='User registration failure!', retcode=RetCode.EXCEPTION_ERROR)
+        return get_json_result(data=False,
+                               retmsg=f'User registration failure, error: {str(e)}',
+                               retcode=RetCode.EXCEPTION_ERROR)
 
 
 @manager.route("/tenant_info", methods=["GET"])
