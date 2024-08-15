@@ -44,7 +44,7 @@ The database user name.
 The database password. The modification should be synchronous updating at *MYSQL_PASSWORD* in [.env](./.env).
 
 ### port
-The serving port of mysql inside the container. The modification should be synchronous updating at [docker-compose.yml](./ragkl-docker-compose.yml)
+The serving port of mysql inside the container. The modification should be synchronous updating at [docker-compose.yml](./docker-compose.yml)
 
 ### max_connections
 The max database connection.
@@ -61,7 +61,7 @@ The username of minio. The modification should be synchronous updating at *MINIO
 The password of minio. The modification should be synchronous updating at *MINIO_PASSWORD* in [.env](./.env).
 
 ### host
-The serving IP and port inside the docker container. This is not updating until changing the minio part in [docker-compose.yml](./ragkl-docker-compose.yml)
+The serving IP and port inside the docker container. This is not updating until changing the minio part in [docker-compose.yml](./docker-compose.yml)
 
 ## user_default_llm
 Newly signed-up users use LLM configured by this part. Otherwise, user need to configure his own LLM in *setting*.
