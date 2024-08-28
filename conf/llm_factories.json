@@ -349,13 +349,19 @@
             "status": "1",
             "llm": [
                 {
-                    "llm_name": "Skylark2-pro-32k",
+                    "llm_name": "Doubao-pro-128k",
+                    "tags": "LLM,CHAT,128k",
+                    "max_tokens": 131072,
+                    "model_type": "chat"
+                },
+                {
+                    "llm_name": "Doubao-pro-32k",
                     "tags": "LLM,CHAT,32k",
                     "max_tokens": 32768,
                     "model_type": "chat"
                 },
                 {
-                    "llm_name": "Skylark2-pro-4k",
+                    "llm_name": "Doubao-pro-4k",
                     "tags": "LLM,CHAT,4k",
                     "max_tokens": 4096,
                     "model_type": "chat"
@@ -898,6 +904,18 @@
                     "llm_name": "llama3-8b-8192",
                     "tags": "LLM,CHAT,30k",
                     "max_tokens": 8192,
+                    "model_type": "chat"
+                },
+                {
+                    "llm_name": "llama-3.1-70b-versatile",
+                    "tags": "LLM,CHAT,128k",
+                    "max_tokens": 131072,
+                    "model_type": "chat"
+                },
+                {
+                    "llm_name": "llama-3.1-8b-instant",
+                    "tags": "LLM,CHAT,128k",
+                    "max_tokens": 131072,
                     "model_type": "chat"
                 },
                 {
@@ -3206,6 +3224,20 @@
             "name": "BaiduYiyan",
             "logo": "",
             "tags": "LLM",
+            "status": "1",
+            "llm": []
+        },
+        {
+            "name": "Fish Audio",
+            "logo": "",
+            "tags": "TTS",
+            "status": "1",
+            "llm": []
+        },
+        {
+            "name": "Tencent Cloud",
+            "logo": "",
+            "tags": "SPEECH2TEXT",
             "status": "1",
             "llm": []
         }
