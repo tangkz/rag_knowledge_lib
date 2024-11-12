@@ -23,7 +23,13 @@ import { devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { Operator, SwitchElseTo } from './constant';
 import { NodeData } from './interface';
-import { getOperatorIndex, isEdgeEqual } from './utils';
+import {
+  duplicateNodeForm,
+  generateNodeNamesWithIncreasingIndex,
+  getNodeDragHandle,
+  getOperatorIndex,
+  isEdgeEqual,
+} from './utils';
 
 export type RFState = {
   nodes: Node<NodeData>[];
@@ -54,7 +60,7 @@ export type RFState = {
     target?: string | null,
   ) => void;
   deletePreviousEdgeOfClassificationNode: (connection: Connection) => void;
-  duplicateNode: (id: string) => void;
+  duplicateNode: (id: string, name: string) => void;
   deleteEdge: () => void;
   deleteEdgeById: (id: string) => void;
   deleteNodeById: (id: string) => void;
@@ -63,6 +69,7 @@ export type RFState = {
   updateMutableNodeFormItem: (id: string, field: string, value: any) => void;
   getOperatorTypeFromId: (id?: string | null) => string | undefined;
   updateNodeName: (id: string, name: string) => void;
+  generateNodeName: (name: string) => string;
   setClickedNodeId: (id?: string) => void;
 };
 
@@ -226,21 +233,25 @@ const useGraphStore = create<RFState>()(
           }
         }
       },
-      duplicateNode: (id: string) => {
-        const { getNode, addNode } = get();
+      duplicateNode: (id: string, name: string) => {
+        const { getNode, addNode, generateNodeName } = get();
         const node = getNode(id);
         const position = {
-          x: (node?.position?.x || 0) + 30,
-          y: (node?.position?.y || 0) + 20,
+          x: (node?.position?.x || 0) + 50,
+          y: (node?.position?.y || 0) + 50,
         };
 
         addNode({
           ...(node || {}),
-          data: node?.data,
+          data: {
+            ...duplicateNodeForm(node?.data),
+            name: generateNodeName(name),
+          },
           selected: false,
           dragging: false,
           id: `${node?.data?.label}:${humanId()}`,
           position,
+          dragHandle: getNodeDragHandle(node?.data?.label),
         });
       },
       deleteEdge: () => {
@@ -381,6 +392,11 @@ const useGraphStore = create<RFState>()(
       },
       setClickedNodeId: (id?: string) => {
         set({ clickedNodeId: id });
+      },
+      generateNodeName: (name: string) => {
+        const { nodes } = get();
+
+        return generateNodeNamesWithIncreasingIndex(name, nodes);
       },
     })),
     { name: 'graph' },

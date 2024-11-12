@@ -13,9 +13,12 @@
 from tika import parser
 from io import BytesIO
 import re
+
+from deepdoc.parser.utils import get_text
 from rag.app import laws
-from rag.nlp import rag_tokenizer, tokenize, find_codec
+from rag.nlp import rag_tokenizer, tokenize
 from deepdoc.parser import PdfParser, ExcelParser, PlainParser, HtmlParser
+from api.utils.log_utils import logger
 
 
 class Pdf(PdfParser):
@@ -35,7 +38,7 @@ class Pdf(PdfParser):
         start = timer()
         self._layouts_rec(zoomin, drop=False)
         callback(0.63, "Layout analysis finished.")
-        print("layouts:", timer() - start)
+        logger.info("layouts cost: {}s".format(timer() - start))
         self._table_transformer_job(zoomin)
         callback(0.65, "Table analysis finished.")
         self._text_merge()
@@ -82,17 +85,7 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
 
     elif re.search(r"\.(txt|md|markdown)$", filename, re.IGNORECASE):
         callback(0.1, "Start to parse.")
-        txt = ""
-        if binary:
-            encoding = find_codec(binary)
-            txt = binary.decode(encoding, errors="ignore")
-        else:
-            with open(filename, "r") as f:
-                while True:
-                    l = f.readline()
-                    if not l:
-                        break
-                    txt += l
+        txt = get_text(filename, binary)
         sections = txt.split("\n")
         sections = [s for s in sections if s]
         callback(0.8, "Finish parsing.")

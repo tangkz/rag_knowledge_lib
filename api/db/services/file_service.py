@@ -26,8 +26,9 @@ from api.db.services.common_service import CommonService
 from api.db.services.document_service import DocumentService
 from api.db.services.file2document_service import File2DocumentService
 from api.utils import get_uuid
-from api.utils.file_utils import filename_type, thumbnail
-from rag.utils.minio_conn import MINIO
+from api.utils.file_utils import filename_type, thumbnail_img
+from rag.utils.storage_factory import STORAGE_IMPL
+from api.utils.log_utils import logger
 
 
 class FileService(CommonService):
@@ -272,8 +273,8 @@ class FileService(CommonService):
                 cls.delete_folder_by_pf_id(user_id, file.id)
             return cls.model.delete().where((cls.model.tenant_id == user_id)
                                             & (cls.model.id == folder_id)).execute(),
-        except Exception as e:
-            print(e)
+        except Exception:
+            logger.exception("delete_folder_by_pf_id")
             raise RuntimeError("Database error (File retrieval)!")
 
     @classmethod
@@ -321,8 +322,8 @@ class FileService(CommonService):
     def move_file(cls, file_ids, folder_id):
         try:
             cls.filter_update((cls.model.id << file_ids, ), { 'parent_id': folder_id })
-        except Exception as e:
-            print(e)
+        except Exception:
+            logger.exception("move_file")
             raise RuntimeError("Database error (File move)!")
 
     @classmethod
@@ -350,30 +351,31 @@ class FileService(CommonService):
                     raise RuntimeError("This type of file has not been supported yet!")
 
                 location = filename
-                while MINIO.obj_exist(kb.id, location):
+                while STORAGE_IMPL.obj_exist(kb.id, location):
                     location += "_"
                 blob = file.read()
-                MINIO.put(kb.id, location, blob)
+                STORAGE_IMPL.put(kb.id, location, blob)
+
+                doc_id = get_uuid()
+
+                img = thumbnail_img(filename, blob)
+                thumbnail_location = ''
+                if img is not None:
+                    thumbnail_location = f'thumbnail_{doc_id}.png'
+                    STORAGE_IMPL.put(kb.id, thumbnail_location, img)
+
                 doc = {
-                    "id": get_uuid(),
+                    "id": doc_id,
                     "kb_id": kb.id,
-                    "parser_id": kb.parser_id,
+                    "parser_id": self.get_parser(filetype, filename, kb.parser_id),
                     "parser_config": kb.parser_config,
                     "created_by": user_id,
                     "type": filetype,
                     "name": filename,
                     "location": location,
                     "size": len(blob),
-                    "thumbnail": thumbnail(filename, blob)
+                    "thumbnail": thumbnail_location
                 }
-                if doc["type"] == FileType.VISUAL:
-                    doc["parser_id"] = ParserType.PICTURE.value
-                if doc["type"] == FileType.AURAL:
-                    doc["parser_id"] = ParserType.AUDIO.value
-                if re.search(r"\.(ppt|pptx|pages)$", filename):
-                    doc["parser_id"] = ParserType.PRESENTATION.value
-                if re.search(r"\.(eml)$", filename):
-                    doc["parser_id"] = ParserType.EMAIL.value
                 DocumentService.insert(doc)
 
                 FileService.add_file_from_kb(doc, kb_folder["id"], kb.tenant_id)
@@ -382,3 +384,15 @@ class FileService(CommonService):
                 err.append(file.filename + ": " + str(e))
 
         return err, files
+
+    @staticmethod
+    def get_parser(doc_type, filename, default):
+        if doc_type == FileType.VISUAL:
+            return ParserType.PICTURE.value
+        if doc_type == FileType.AURAL:
+            return ParserType.AUDIO.value
+        if re.search(r"\.(ppt|pptx|pages)$", filename):
+            return ParserType.PRESENTATION.value
+        if re.search(r"\.(eml)$", filename):
+            return ParserType.EMAIL.value
+        return default

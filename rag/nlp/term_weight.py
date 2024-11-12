@@ -1,4 +1,4 @@
-#
+    #
 #  Copyright 2024 The InfiniFlow Authors. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ import os
 import numpy as np
 from rag.nlp import rag_tokenizer
 from api.utils.file_utils import get_project_base_directory
+from api.utils.log_utils import logger
 
 
 class Dealer:
@@ -81,12 +82,12 @@ class Dealer:
         self.ne, self.df = {}, {}
         try:
             self.ne = json.load(open(os.path.join(fnm, "ner.json"), "r"))
-        except Exception as e:
-            print("[WARNING] Load ner.json FAIL!")
+        except Exception:
+            logger.warning("Load ner.json FAIL!")
         try:
             self.df = load_dict(os.path.join(fnm, "term.freq"))
-        except Exception as e:
-            print("[WARNING] Load term.freq FAIL!")
+        except Exception:
+            logger.warning("Load term.freq FAIL!")
 
     def pretoken(self, txt, num=False, stpwd=True):
         patt = [
@@ -158,7 +159,7 @@ class Dealer:
                 tks.append(t)
         return tks
 
-    def weights(self, tks):
+    def weights(self, tks, preprocess=True):
         def skill(t):
             if t not in self.sk:
                 return 1
@@ -222,14 +223,20 @@ class Dealer:
         def idf(s, N): return math.log10(10 + ((N - s + 0.5) / (s + 0.5)))
 
         tw = []
-        for tk in tks:
-            tt = self.tokenMerge(self.pretoken(tk, True))
-            idf1 = np.array([idf(freq(t), 10000000) for t in tt])
-            idf2 = np.array([idf(df(t), 1000000000) for t in tt])
+        if not preprocess:
+            idf1 = np.array([idf(freq(t), 10000000) for t in tks])
+            idf2 = np.array([idf(df(t), 1000000000) for t in tks])
             wts = (0.3 * idf1 + 0.7 * idf2) * \
-                np.array([ner(t) * postag(t) for t in tt])
-
-            tw.extend(zip(tt, wts))
+                np.array([ner(t) * postag(t) for t in tks])
+            tw = list(zip(tks, wts))
+        else:
+            for tk in tks:
+                tt = self.tokenMerge(self.pretoken(tk, True))
+                idf1 = np.array([idf(freq(t), 10000000) for t in tt])
+                idf2 = np.array([idf(df(t), 1000000000) for t in tt])
+                wts = (0.3 * idf1 + 0.7 * idf2) * \
+                    np.array([ner(t) * postag(t) for t in tt])
+                tw.extend(zip(tt, wts))
 
         S = np.sum([s for _, s in tw])
         return [(t, s / S) for t, s in tw]

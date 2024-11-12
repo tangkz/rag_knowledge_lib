@@ -16,7 +16,8 @@
 from abc import ABC
 import re
 import pandas as pd
-from peewee import MySQLDatabase, PostgresqlDatabase
+import pymysql
+import psycopg2
 from agent.component.base import ComponentBase, ComponentParamBase
 
 
@@ -44,6 +45,9 @@ class ExeSQLParam(ComponentParamBase):
         self.check_positive_integer(self.port, "IP Port")
         self.check_empty(self.password, "Database password")
         self.check_positive_integer(self.top_n, "Number of records")
+        if self.database == "rag_flow":
+            if self.host == "ragflow-mysql": raise ValueError("The host is not accessible.")
+            if self.password == "infini_rag_flow": raise ValueError("The host is not accessible.")
 
 
 class ExeSQL(ComponentBase, ABC):
@@ -54,7 +58,7 @@ class ExeSQL(ComponentBase, ABC):
             setattr(self, "_loop", 0)
         if self._loop >= self._param.loop:
             self._loop = 0
-            raise Exception("Maximum loop time exceeds. Can't query the correct data via sql statement.")
+            raise Exception("Maximum loop time exceeds. Can't query the correct data via SQL statement.")
         self._loop += 1
 
         ans = self.get_input()
@@ -63,34 +67,37 @@ class ExeSQL(ComponentBase, ABC):
         ans = re.sub(r';.*?SELECT ', '; SELECT ', ans, flags=re.IGNORECASE)
         ans = re.sub(r';[^;]*$', r';', ans)
         if not ans:
-            return ExeSQL.be_output("SQL statement not found!")
+            raise Exception("SQL statement not found!")
 
         if self._param.db_type in ["mysql", "mariadb"]:
-            db = MySQLDatabase(self._param.database, user=self._param.username, host=self._param.host,
-                               port=self._param.port, password=self._param.password)
+            db = pymysql.connect(db=self._param.database, user=self._param.username, host=self._param.host,
+                                 port=self._param.port, password=self._param.password)
         elif self._param.db_type == 'postgresql':
-            db = PostgresqlDatabase(self._param.database, user=self._param.username, host=self._param.host,
-                                    port=self._param.port, password=self._param.password)
+            db = psycopg2.connect(dbname=self._param.database, user=self._param.username, host=self._param.host,
+                                  port=self._param.port, password=self._param.password)
 
         try:
-            db.connect()
+            cursor = db.cursor()
         except Exception as e:
-            return ExeSQL.be_output("**Error**: \nDatabase Connection Failed! \n" + str(e))
+            raise Exception("Database Connection Failed! \n" + str(e))
         sql_res = []
-        for single_sql in re.split(r';', ans):
+        for single_sql in re.split(r';', ans.replace(r"\n", " ")):
             if not single_sql:
                 continue
             try:
-                query = db.execute_sql(single_sql)
-                single_res = pd.DataFrame([i for i in query.fetchmany(size=self._param.top_n)])
-                single_res.columns = [i[0] for i in query.description]
-                sql_res.append({"content": "\nTotal: " + str(query.rowcount) + "\n" + single_res.to_markdown()})
+                cursor.execute(single_sql)
+                if cursor.rowcount == 0:
+                    sql_res.append({"content": "\nTotal: 0\n No record in the database!"})
+                    continue
+                single_res = pd.DataFrame([i for i in cursor.fetchmany(size=self._param.top_n)])
+                single_res.columns = [i[0] for i in cursor.description]
+                sql_res.append({"content": "\nTotal: " + str(cursor.rowcount) + "\n" + single_res.to_markdown()})
             except Exception as e:
                 sql_res.append({"content": "**Error**:" + str(e) + "\nError SQL Statement:" + single_sql})
                 pass
         db.close()
 
         if not sql_res:
-            return ExeSQL.be_output("No record in the database!")
+            return ExeSQL.be_output("")
 
         return pd.DataFrame(sql_res)

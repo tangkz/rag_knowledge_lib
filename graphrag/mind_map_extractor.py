@@ -16,8 +16,8 @@
 
 import collections
 import logging
+import os
 import re
-import logging
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -29,6 +29,7 @@ from rag.llm.chat_model import Base as CompletionLLM
 import markdown_to_json
 from functools import reduce
 from rag.utils import num_tokens_from_string
+from api.utils.log_utils import logger
 
 
 @dataclass
@@ -38,7 +39,6 @@ class MindMapResult:
 
 
 class MindMapExtractor:
-
     _llm: CompletionLLM
     _input_text_key: str
     _mind_map_prompt: str
@@ -65,17 +65,20 @@ class MindMapExtractor:
         if isinstance(obj, str):
             obj = [obj]
         if isinstance(obj, list):
-            for i in obj: keyset.add(i)
-            return [{"id": re.sub(r"\*+", "", i), "children": []} for i in obj]
+            keyset.update(obj)
+            obj = [re.sub(r"\*+", "", i) for i in obj]
+            return [{"id": i, "children": []} for i in obj if i]
         arr = []
         for k, v in obj.items():
             k = self._key(k)
-            if not k or k in keyset: continue
-            keyset.add(k)
-            arr.append({
-                "id": k,
-                "children": self._be_children(v, keyset)
-            })
+            if k and k not in keyset:
+                keyset.add(k)
+                arr.append(
+                    {
+                        "id": k,
+                        "children": self._be_children(v, keyset)
+                    }
+                )
         return arr
 
     def __call__(
@@ -86,9 +89,10 @@ class MindMapExtractor:
             prompt_variables = {}
 
         try:
-            exe = ThreadPoolExecutor(max_workers=12)
+            max_workers = int(os.environ.get('MINDMAP_EXTRACTOR_MAX_WORKERS', 12))
+            exe = ThreadPoolExecutor(max_workers=max_workers)
             threads = []
-            token_count = max(self._llm.max_length * 0.8, self._llm.max_length-512)
+            token_count = max(self._llm.max_length * 0.8, self._llm.max_length - 512)
             texts = []
             res = []
             cnt = 0
@@ -107,18 +111,25 @@ class MindMapExtractor:
                 res.append(_.result())
 
             if not res:
-                return MindMapResult(output={"root":{}})
+                return MindMapResult(output={"id": "root", "children": []})
 
             merge_json = reduce(self._merge, res)
-            if len(merge_json.keys()) > 1:
-                keyset = set(
-                    [re.sub(r"\*+", "", k) for k, v in merge_json.items() if isinstance(v, dict) and re.sub(r"\*+", "", k)])
-                merge_json = {"id": "root",
-                          "children": [{"id": self._key(k), "children": self._be_children(v, keyset)} for k, v in
-                                       merge_json.items() if isinstance(v, dict) and self._key(k)]}
+            if len(merge_json) > 1:
+                keys = [re.sub(r"\*+", "", k) for k, v in merge_json.items() if isinstance(v, dict)]
+                keyset = set(i for i in keys if i)
+                merge_json = {
+                    "id": "root",
+                    "children": [
+                        {
+                            "id": self._key(k),
+                            "children": self._be_children(v, keyset)
+                        }
+                        for k, v in merge_json.items() if isinstance(v, dict) and self._key(k)
+                    ]
+                }
             else:
                 k = self._key(list(merge_json.keys())[0])
-                merge_json = {"id": k, "children": self._be_children(list(merge_json.items())[0][1], set([k]))}
+                merge_json = {"id": k, "children": self._be_children(list(merge_json.items())[0][1], {k})}
 
         except Exception as e:
             logging.exception("error mind graph")
@@ -151,14 +162,14 @@ class MindMapExtractor:
             elif isinstance(value, list):
                 new_value = {}
                 for i in range(len(value)):
-                    if isinstance(value[i], list):
+                    if isinstance(value[i], list) and i > 0:
                         new_value[value[i - 1]] = value[i][0]
                 data[key] = new_value
             else:
                 continue
         return data
 
-    def _todict(self, layer:collections.OrderedDict):
+    def _todict(self, layer: collections.OrderedDict):
         to_ret = layer
         if isinstance(layer, collections.OrderedDict):
             to_ret = dict(layer)
@@ -180,8 +191,8 @@ class MindMapExtractor:
         }
         text = perform_variable_replacements(self._mind_map_prompt, variables=variables)
         gen_conf = {"temperature": 0.5}
-        response = self._llm.chat(text, [], gen_conf)
+        response = self._llm.chat(text, [{"role": "user", "content": "Output:"}], gen_conf)
         response = re.sub(r"```[^\n]*", "", response)
-        print(response)
-        print("---------------------------------------------------\n", self._todict(markdown_to_json.dictify(response)))
+        logger.info(response)
+        logger.info(self._todict(markdown_to_json.dictify(response)))
         return self._todict(markdown_to_json.dictify(response))

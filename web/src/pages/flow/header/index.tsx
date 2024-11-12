@@ -4,14 +4,20 @@ import { useFetchFlow } from '@/hooks/flow-hooks';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button, Flex, Space } from 'antd';
 import { Link, useParams } from 'umi';
-import { useSaveGraph, useSaveGraphBeforeOpeningDebugDrawer } from '../hooks';
+import FlowIdModal from '../flow-id-modal';
+import {
+  useSaveGraph,
+  useSaveGraphBeforeOpeningDebugDrawer,
+  useWatchAgentChange,
+} from '../hooks';
 import styles from './index.less';
 
 interface IProps {
   showChatDrawer(): void;
+  chatDrawerVisible: boolean;
 }
 
-const FlowHeader = ({ showChatDrawer }: IProps) => {
+const FlowHeader = ({ showChatDrawer, chatDrawerVisible }: IProps) => {
   const { saveGraph } = useSaveGraph();
   const handleRun = useSaveGraphBeforeOpeningDebugDrawer(showChatDrawer);
   const { data } = useFetchFlow();
@@ -19,9 +25,11 @@ const FlowHeader = ({ showChatDrawer }: IProps) => {
   const {
     visible: overviewVisible,
     hideModal: hideOverviewModal,
-    showModal: showOverviewModal,
+    // showModal: showOverviewModal,
   } = useSetModalState();
+  const { visible, hideModal, showModal } = useSetModalState();
   const { id } = useParams();
+  const time = useWatchAgentChange(chatDrawerVisible);
 
   return (
     <>
@@ -35,7 +43,12 @@ const FlowHeader = ({ showChatDrawer }: IProps) => {
           <Link to={`/flow`}>
             <ArrowLeftOutlined />
           </Link>
-          <h3>{data.title}</h3>
+          <div className="flex flex-col">
+            <span className="font-semibold text-[18px]">{data.title}</span>
+            <span className="font-normal text-sm">
+              {t('autosaved')} {time}
+            </span>
+          </div>
         </Space>
         <Space size={'large'}>
           <Button onClick={handleRun}>
@@ -44,8 +57,11 @@ const FlowHeader = ({ showChatDrawer }: IProps) => {
           <Button type="primary" onClick={saveGraph}>
             <b>{t('save')}</b>
           </Button>
-          <Button type="primary" onClick={showOverviewModal}>
+          {/* <Button type="primary" onClick={showOverviewModal} disabled>
             <b>{t('publish')}</b>
+          </Button> */}
+          <Button type="primary" onClick={showModal}>
+            <b>Agent ID</b>
           </Button>
         </Space>
       </Flex>
@@ -57,6 +73,7 @@ const FlowHeader = ({ showChatDrawer }: IProps) => {
           idKey="canvasId"
         ></ChatOverviewModal>
       )}
+      {visible && <FlowIdModal hideModal={hideModal}></FlowIdModal>}
     </>
   );
 };
