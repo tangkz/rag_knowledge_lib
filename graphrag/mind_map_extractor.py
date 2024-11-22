@@ -14,14 +14,14 @@
 #  limitations under the License.
 #
 
-import collections
 import logging
+import collections
 import os
 import re
 import traceback
+from typing import Any
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Any
 
 from graphrag.mind_map_prompt import MIND_MAP_EXTRACTION_PROMPT
 from graphrag.utils import ErrorHandlerFn, perform_variable_replacements
@@ -29,7 +29,6 @@ from rag.llm.chat_model import Base as CompletionLLM
 import markdown_to_json
 from functools import reduce
 from rag.utils import num_tokens_from_string
-from api.utils.log_utils import logger
 
 
 @dataclass
@@ -193,6 +192,6 @@ class MindMapExtractor:
         gen_conf = {"temperature": 0.5}
         response = self._llm.chat(text, [{"role": "user", "content": "Output:"}], gen_conf)
         response = re.sub(r"```[^\n]*", "", response)
-        logger.info(response)
-        logger.info(self._todict(markdown_to_json.dictify(response)))
+        logging.debug(response)
+        logging.debug(self._todict(markdown_to_json.dictify(response)))
         return self._todict(markdown_to_json.dictify(response))

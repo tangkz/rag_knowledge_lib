@@ -2,7 +2,7 @@ export default {
   translation: {
     common: {
       delete: 'Delete',
-      deleteModalTitle: 'Are you sure delete this item?',
+      deleteModalTitle: 'Are you sure to delete this item?',
       ok: 'Yes',
       cancel: 'No',
       total: 'Total',
@@ -32,6 +32,7 @@ export default {
       s: 'S',
       pleaseSelect: 'Please select',
       pleaseInput: 'Please input',
+      submit: 'Submit',
     },
     login: {
       login: 'Sign in',
@@ -60,8 +61,8 @@ export default {
       register: 'Register',
       signin: 'Sign in',
       home: 'Home',
-      setting: 'User Settings',
-      logout: 'Sign Out',
+      setting: 'User settings',
+      logout: 'Log out',
       fileManager: 'File Management',
       flow: 'Agent',
       search: 'Search',
@@ -104,12 +105,12 @@ export default {
         'Final step! After success, leave the rest to PropertyBrain AI.',
       similarityThreshold: 'Similarity threshold',
       similarityThresholdTip:
-        "We use hybrid similarity score to evaluate distance between two lines of text. It's weighted keywords similarity and vector cosine similarity. If the similarity between query and chunk is less than this threshold, the chunk will be filtered out.",
+        'RAGFlow employs either a combination of weighted keyword similarity and weighted vector cosine similarity, or a combination of weighted keyword similarity and weighted reranking score during retrieval. This parameter sets the threshold for similarities between the user query and chunks. Any chunk with a similarity score below this threshold will be excluded from the results.',
       vectorSimilarityWeight: 'Keywords similarity weight',
       vectorSimilarityWeightTip:
-        " We use hybrid similarity score to evaluate distance between two lines of text. It's weighted keywords similarity and vector cosine similarity or rerank score(0~1). The sum of both weights is 1.0.",
+        'This sets the weight of keyword similarity in the combined similarity score, either used with vector cosine similarity or with reranking score. The total of the two weights must equal 1.0.',
       testText: 'Test text',
-      testTextPlaceholder: 'Please input your question!',
+      testTextPlaceholder: 'Input your question here!',
       testingLabel: 'Testing',
       similarity: 'Hybrid Similarity',
       termSimilarity: 'Term Similarity',
@@ -151,16 +152,16 @@ export default {
       cancel: 'Cancel',
       rerankModel: 'Rerank Model',
       rerankPlaceholder: 'Please select',
-      rerankTip: `If it's empty. It uses embeddings of query and chunks to compuste vector cosine similarity. Otherwise, it uses rerank score in place of  vector cosine similarity.`,
+      rerankTip: `If left empty, RAGFlow will use a combination of weighted keyword similarity and weighted vector cosine similarity; if a rerank model is selected, a weighted reranking score will replace the weighted vector cosine similarity.`,
       topK: 'Top-K',
       topKTip: `K chunks will be fed into rerank models.`,
       delimiter: `Delimiter`,
       html4excel: 'Excel to HTML',
       html4excelTip: `Excel will be parsed into HTML table or not. If it's FALSE, every row in Excel will be formed as a chunk.`,
       autoKeywords: 'Auto-keyword',
-      autoKeywordsTip: `Extract N keywords for each chunk to improve their ranking for queries containing those keywords. You can check or update the added keywords for a chunk from the chunk list. Be aware that extra tokens will be consumed by the LLM specified in 'System model settings'.`,
+      autoKeywordsTip: `Extract N keywords for each chunk to increase their ranking for queries containing those keywords. You can check or update the added keywords for a chunk from the chunk list. Be aware that extra tokens will be consumed by the LLM specified in 'System model settings'.`,
       autoQuestions: 'Auto-question',
-      autoQuestionsTip: `Extract N questions for each chunk to improve their ranking for queries containing those questions. You can check or update the added questions for a chunk from the chunk list. This feature will not disrupt the chunking process if an error occurs, except that it may add an empty result to the original chunk. Be aware that extra tokens will be consumed by the LLM specified in 'System model settings'.`,
+      autoQuestionsTip: `Extract N questions for each chunk to increase their ranking for queries containing those questions. You can check or update the added questions for a chunk from the chunk list. This feature will not disrupt the chunking process if an error occurs, except that it may add an empty result to the original chunk. Be aware that extra tokens will be consumed by the LLM specified in 'System model settings'.`,
     },
     knowledgeConfiguration: {
       titleDescription:
@@ -176,7 +177,7 @@ export default {
       chunkTokenNumber: 'Chunk token number',
       chunkTokenNumberMessage: 'Chunk token number is required',
       embeddingModelTip:
-        "The model that converts chunks into embeddings. It cannot be changed once the knowledge base has chunks. To switch to a different embedding model, You must delete all chunks in the knowledge base.",
+        'The model that converts chunks into embeddings. It cannot be changed once the knowledge base has chunks. To switch to a different embedding model, You must delete all chunks in the knowledge base.',
       permissionsTip:
         "If set to 'Team', all team members will be able to manage the knowledge base.",
       chunkTokenNumberTip:
@@ -210,13 +211,13 @@ export default {
       We assume that the manual has a hierarchical section structure, using the lowest section titles as basic unit for chunking documents. Therefore, figures and tables in the same section will not be separated, which may result in larger chunk sizes.
       </p>`,
       naive: `<p>Supported file formats are <b>DOCX, EXCEL, PPT, IMAGE, PDF, TXT, MD, JSON, EML, HTML</b>.</p>
-      <p>This method chunks files using the 'naive' way: </p>
+      <p>This method chunks files using a 'naive' method: </p>
       <p>
       <li>Use vision detection model to split the texts into smaller segments.</li>
       <li>Then, combine adjacent segments until the token count exceeds the threshold specified by 'Chunk token number', at which point a chunk is created.</li></p>`,
       paper: `<p>Only <b>PDF</b> file is supported.</p><p>
       Papers will be split by section, such as <i>abstract, 1.1, 1.2</i>. </p><p>
-      This approach enables the LLM to summarize the paper more effectively and provide more comprehensive, understandable responses. 
+      This approach enables the LLM to summarize the paper more effectively and to provide more comprehensive, understandable responses. 
       However, it also increases the context for AI conversations and adds to the computational cost for the LLM. So during a conversation, consider reducing the value of ‘<b>topN</b>’.</p>`,
       presentation: `<p>Supported file formats are <b>PDF</b>, <b>PPTX</b>.</p><p>
       Every page in the slides is treated as a chunk, with its thumbnail image stored.</p><p>
@@ -261,25 +262,23 @@ export default {
     <li>Every row in table will be treated as a chunk.</li>
     </ul>`,
       picture: `
-    <p>Image files are supported. Video is coming soon.</p><p>
-    If the picture has text in it, OCR is applied to extract the text as its text description.
+    <p>Image files are supported, with video support coming soon.</p><p>
+    This method employs an OCR model to extract texts from images.
     </p><p>
-    If the text extracted by OCR is not enough, visual LLM is used to get the descriptions.
+    If the text extracted by the OCR model is deemed insufficient, a specified visual LLM will be used to provide a description of the image.
     </p>`,
       one: `
     <p>Supported file formats are <b>DOCX, EXCEL, PDF, TXT</b>.
     </p><p>
-    For a document, it will be treated as an entire chunk, no split at all.
+    This method treats each document in its entirety as a chunk.
     </p><p>
-    If you want to summarize something that needs all the context of an article and the selected LLM's context length covers the document length, you can try this method.
+    Applicable when you require the LLM to summarize the entire document, provided it can handle that amount of context length.
     </p>`,
       knowledgeGraph: `<p>Supported file formats are <b>DOCX, EXCEL, PPT, IMAGE, PDF, TXT, MD, JSON, EML</b>
 
-<p>After files being chunked, it uses chunks to extract knowledge graph and mind map of the entire document. This method apply the naive ways to chunk files:
-Successive text will be sliced into pieces each of which is around 512 token number.</p>
-<p>Next, chunks will be transmited to LLM to extract nodes and relationships of a knowledge graph, and a mind map.</p>
-
-Mind the entiry type you need to specify.</p>`,
+<p>This approach chunks files using the 'naive'/'General' method. It splits a document into segements and then combines adjacent segments until the token count exceeds the threshold specified by 'Chunk token number', at which point a chunk is created.</p>
+<p>The chunks are then fed to the LLM to extract entities and relationships for a knowledge graph and a mind map.</p>
+<p>Ensure that you set the <b>Entity types</b>.</p>`,
       useRaptor: 'Use RAPTOR to enhance retrieval',
       useRaptorTip:
         'Recursive Abstractive Processing for Tree-Organized Retrieval, see https://huggingface.co/papers/2401.18059 for more information',
@@ -394,6 +393,8 @@ The above is the content you need to summarize.`,
       maxTokensMessage: 'Max Tokens is required',
       maxTokensTip:
         'This sets the maximum length of the model’s output, measured in the number of tokens (words or pieces of words).',
+      maxTokensInvalidMessage: 'Please enter a valid number for Max Tokens.',
+      maxTokensMinMessage: 'Max Tokens cannot be less than 0.',
       quote: 'Show Quote',
       quoteTip: 'Should the source of the original text be displayed?',
       selfRag: 'Self-RAG',
@@ -438,10 +439,17 @@ The above is the content you need to summarize.`,
       multiTurnTip:
         'In multi-round conversations, the query to the knowledge base is optimized. The large model will be called to consume additional tokens.',
       howUseId: 'How to use chat ID?',
+      description: 'Description of assistant',
     },
     setting: {
       profile: 'Profile',
       profileDescription: 'Update your photo and personal details here.',
+      maxTokens: 'Max Tokens',
+      maxTokensMessage: 'Max Tokens is required',
+      maxTokensTip:
+        'This sets the maximum length of the model’s output, measured in the number of tokens (words or pieces of words).',
+      maxTokensInvalidMessage: 'Please enter a valid number for Max Tokens.',
+      maxTokensMinMessage: 'Max Tokens cannot be less than 0.',
       password: 'Password',
       passwordDescription:
         'Please enter your current password to change your password.',
@@ -586,10 +594,11 @@ The above is the content you need to summarize.`,
       updateDate: 'Update Date',
       role: 'Role',
       invite: 'Invite',
-      agree: 'Agree',
-      refuse: 'Refuse',
+      agree: 'Accept',
+      refuse: 'Decline',
       teamMembers: 'Team Members',
       joinedTeams: 'Joined Teams',
+      sureDelete: 'Are you sure to remove this member?',
     },
     message: {
       registered: 'Registered!',
@@ -740,7 +749,7 @@ The above is the content you need to summarize.`,
       bingDescription:
         'This component is used to get search result from https://www.bing.com/. Typically, it performs as a supplement to knowledgebases. Top N and Bing Subscription-Key specifies the number of search results you need to adapt.',
       apiKey: 'API KEY',
-      country: 'Country',
+      country: 'Country&Region',
       language: 'Language',
       googleScholar: 'Google Scholar',
       googleScholarDescription:
@@ -1027,6 +1036,12 @@ The above is the content you need to summarize.`,
       content: 'Content',
       operationResults: 'Operation Results',
       autosaved: 'Autosaved',
+      optional: 'Optional',
+      pasteFileLink: 'Paste file link',
+      testRun: 'Test Run',
+      template: 'Template',
+      templateDescription:
+        'This component is used for typesetting the outputs of various components.',
     },
     footer: {
       profile: 'All rights reserved @ React',

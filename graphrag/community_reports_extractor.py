@@ -5,11 +5,12 @@ Reference:
  - [graphrag](https://github.com/microsoft/graphrag)
 """
 
+import logging
 import json
 import re
 import traceback
+from typing import Callable
 from dataclasses import dataclass
-from typing import List, Callable
 import networkx as nx
 import pandas as pd
 from graphrag import leiden
@@ -19,15 +20,14 @@ from rag.llm.chat_model import Base as CompletionLLM
 from graphrag.utils import ErrorHandlerFn, perform_variable_replacements, dict_has_keys_with_types
 from rag.utils import num_tokens_from_string
 from timeit import default_timer as timer
-from api.utils.log_utils import logger
 
 
 @dataclass
 class CommunityReportsResult:
     """Community reports result class definition."""
 
-    output: List[str]
-    structured_output: List[dict]
+    output: list[str]
+    structured_output: list[dict]
 
 
 class CommunityReportsExtractor:
@@ -53,7 +53,7 @@ class CommunityReportsExtractor:
         self._max_report_length = max_report_length or 1500
 
     def __call__(self, graph: nx.Graph, callback: Callable | None = None):
-        communities: dict[str, dict[str, List]] = leiden.run(graph, {})
+        communities: dict[str, dict[str, list]] = leiden.run(graph, {})
         total = sum([len(comm.items()) for _, comm in communities.items()])
         relations_df = pd.DataFrame([{"source":s, "target": t, **attr} for s, t, attr in graph.edges(data=True)])
         res_str = []
@@ -80,7 +80,7 @@ class CommunityReportsExtractor:
                     response = re.sub(r"[^\}]*$", "", response)
                     response = re.sub(r"\{\{", "{", response)
                     response = re.sub(r"\}\}", "}", response)
-                    logger.info(response)
+                    logging.debug(response)
                     response = json.loads(response)
                     if not dict_has_keys_with_types(response, [
                                 ("title", str),
@@ -92,7 +92,7 @@ class CommunityReportsExtractor:
                     response["weight"] = weight
                     response["entities"] = ents
                 except Exception as e:
-                    logger.exception("CommunityReportsExtractor got exception")
+                    logging.exception("CommunityReportsExtractor got exception")
                     self._on_error(e, traceback.format_exc(), None)
                     continue
 
