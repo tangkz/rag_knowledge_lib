@@ -5,7 +5,7 @@ slug: /configurations
 
 # Configurations
 
-Configurations for installing RAGFlow via Docker.
+Configurations for deploying RAGFlow via Docker.
 
 ## Guidelines
 
@@ -32,7 +32,11 @@ docker compose -f docker/docker-compose.yml up -d
 - **docker-compose.yml**  
   Sets up environment for RAGFlow and its dependencies.
 - **docker-compose-base.yml**  
-  Sets up environment for RAGFlow's base services: Elasticsearch, MySQL, MinIO, and Redis.
+  Sets up environment for RAGFlow's dependencies: Elasticsearch/[Infinity](https://github.com/infiniflow/infinity), MySQL, MinIO, and Redis.
+
+:::danger IMPORTANT
+We do not actively maintain **docker-compose-CN-oc9.yml**, **docker-compose-gpu-CN-oc9.yml**, or **docker-compose-gpu.yml**, so use them at your own risk. However, you are welcome to file a pull request to improve any of them.
+:::
 
 ## Docker environment variables
 
@@ -45,7 +49,7 @@ The [.env](https://github.com/infiniflow/ragflow/blob/main/docker/.env) file con
 - `ES_PORT`  
   The port used to expose the Elasticsearch service to the host machine, allowing **external** access to the service running inside the Docker container.  Defaults to `1200`.
 - `ELASTIC_PASSWORD`  
-  The password for Elasticsearch. 
+  The password for Elasticsearch.
 
 ### Kibana
 
@@ -77,7 +81,7 @@ The [.env](https://github.com/infiniflow/ragflow/blob/main/docker/.env) file con
 - `MINIO_USER`  
   The username for MinIO.
 - `MINIO_PASSWORD`  
-  The password for MinIO. accordingly.
+  The password for MinIO.
 
 ### Redis
 
@@ -93,8 +97,8 @@ The [.env](https://github.com/infiniflow/ragflow/blob/main/docker/.env) file con
 - `RAGFLOW-IMAGE`  
   The Docker image edition. Available editions:  
   
-  - `infiniflow/ragflow:dev-slim` (default): The RAGFlow Docker image without embedding models.  
-  - `infiniflow/ragflow:dev`: The RAGFlow Docker image with embedding models including:
+  - `infiniflow/ragflow:v0.16.0-slim` (default): The RAGFlow Docker image without embedding models.  
+  - `infiniflow/ragflow:v0.16.0`: The RAGFlow Docker image with embedding models including:
     - Built-in embedding models:
       - `BAAI/bge-large-zh-v1.5` 
       - `BAAI/bge-reranker-v2-m3`
@@ -113,12 +117,12 @@ The [.env](https://github.com/infiniflow/ragflow/blob/main/docker/.env) file con
 :::tip NOTE  
 If you cannot download the RAGFlow Docker image, try the following mirrors.  
 
-- For the `dev-slim` edition:  
-  - `RAGFLOW_IMAGE=swr.cn-north-4.myhuaweicloud.com/infiniflow/ragflow:dev-slim` or,
-  - `RAGFLOW_IMAGE=registry.cn-hangzhou.aliyuncs.com/infiniflow/ragflow:dev-slim`.
-- For the `dev` edition:  
-  - `RAGFLOW_IMAGE=swr.cn-north-4.myhuaweicloud.com/infiniflow/ragflow:dev` or,
-  - `RAGFLOW_IMAGE=registry.cn-hangzhou.aliyuncs.com/infiniflow/ragflow:dev`.
+- For the `nightly-slim` edition:  
+  - `RAGFLOW_IMAGE=swr.cn-north-4.myhuaweicloud.com/infiniflow/ragflow:nightly-slim` or,
+  - `RAGFLOW_IMAGE=registry.cn-hangzhou.aliyuncs.com/infiniflow/ragflow:nightly-slim`.
+- For the `nightly` edition:  
+  - `RAGFLOW_IMAGE=swr.cn-north-4.myhuaweicloud.com/infiniflow/ragflow:nightly` or,
+  - `RAGFLOW_IMAGE=registry.cn-hangzhou.aliyuncs.com/infiniflow/ragflow:nightly`.
 :::
 
 ### Timezone
@@ -134,7 +138,7 @@ If you cannot download the RAGFlow Docker image, try the following mirrors.
 ### MacOS
 
 - `MACOS`  
-  Optimizations for MacOS. It is disabled by default. You can uncomment this line if your OS is MacOS.
+  Optimizations for macOS. It is disabled by default. You can uncomment this line if your OS is macOS.
 
 ## Service configuration
 
@@ -149,22 +153,22 @@ If you cannot download the RAGFlow Docker image, try the following mirrors.
   
 - `name`: The MySQL database name. Defaults to `rag_flow`.
 - `user`: The username for MySQL.
-- `password`: The password for MySQL. When updated, you must revise the `MYSQL_PASSWORD` variable in [.env](https://github.com/infiniflow/ragflow/blob/main/docker/.env) accordingly.
+- `password`: The password for MySQL.
 - `port`: The MySQL serving port inside the Docker container. Defaults to `3306`.
 - `max_connections`: The maximum number of concurrent connections to the MySQL database. Defaults to `100`.
 - `stale_timeout`: Timeout in seconds.
 
 ### `minio`
   
-- `user`: The username for MinIO. When updated, you must revise the `MINIO_USER` variable in [.env](https://github.com/infiniflow/ragflow/blob/main/docker/.env) accordingly.
-- `password`: The password for MinIO. When updated, you must revise the `MINIO_PASSWORD` variable in [.env](https://github.com/infiniflow/ragflow/blob/main/docker/.env) accordingly.
+- `user`: The username for MinIO.
+- `password`: The password for MinIO.
 - `host`: The MinIO serving IP *and* port inside the Docker container. Defaults to `minio:9000`.
 
 ### `oauth`  
 
 The OAuth configuration for signing up or signing in to RAGFlow using a third-party account.  It is disabled by default. To enable this feature, uncomment the corresponding lines in **service_conf.yaml.template**.
 
-- `github`: The GitHub authentication settings for your application. Visit the [Github Developer Settings](https://github.com/settings/developers) page to obtain your client_id and secret_key.
+- `github`: The GitHub authentication settings for your application. Visit the [GitHub Developer Settings](https://github.com/settings/developers) page to obtain your client_id and secret_key.
 
 ### `user_default_llm`  
 

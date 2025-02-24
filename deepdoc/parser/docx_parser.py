@@ -1,3 +1,6 @@
+#
+#  Copyright 2025 The InfiniFlow Authors. All Rights Reserved.
+#
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
@@ -47,7 +50,7 @@ class RAGFlowDocxParser:
             for p, n in patt:
                 if re.search(p, b):
                     return n
-            tks = [t for t in rag_tokenizer.tokenize(b).split(" ") if len(t) > 1]
+            tks = [t for t in rag_tokenizer.tokenize(b).split() if len(t) > 1]
             if len(tks) > 3:
                 if len(tks) < 12:
                     return "Tx"

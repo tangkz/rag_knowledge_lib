@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
 
+# PEP 723 metadata
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#   "huggingface-hub",
+#   "nltk",
+# ]
+# ///
+
 from huggingface_hub import snapshot_download
 import nltk
 import os
@@ -18,6 +27,7 @@ urls = [
 repos = [
     "InfiniFlow/text_concat_xgb_v1.0",
     "InfiniFlow/deepdoc",
+    "InfiniFlow/huqie",
     "BAAI/bge-large-zh-v1.5",
     "BAAI/bge-reranker-v2-m3",
     "maidalun1020/bce-embedding-base_v1",

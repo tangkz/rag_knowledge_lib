@@ -33,6 +33,7 @@ export const IconMap = {
   文心一言: 'wenxin',
   Ollama: 'ollama',
   Xinference: 'xinference',
+  ModelScope: 'modelscope',
   DeepSeek: 'deepseek',
   VolcEngine: 'volc_engine',
   BaiChuan: 'baichuan',
@@ -56,6 +57,7 @@ export const IconMap = {
   Upstage: 'upstage',
   'novita.ai': 'novita-ai',
   SILICONFLOW: 'siliconflow',
+  'PPIO': 'ppio',
   '01.AI': 'yi',
   Replicate: 'replicate',
   'Tencent Hunyuan': 'hunyuan',
@@ -72,6 +74,7 @@ export const IconMap = {
   'nomic-ai': 'nomic-ai',
   jinaai: 'jina',
   'sentence-transformers': 'sentence-transformers',
+  GPUStack: 'gpustack',
 };
 
 export const TimezoneList = [

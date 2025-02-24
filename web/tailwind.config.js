@@ -19,15 +19,27 @@ module.exports = {
     },
     extend: {
       colors: {
-        border: 'hsl(var(--border))',
+        border: 'var(--colors-outline-neutral-strong)',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         background: 'var(--background)',
-        foreground: 'hsl(var(--foreground))',
+        foreground: 'var(--colors-text-neutral-strong)',
         buttonBlueText: 'var(--button-blue-text)',
 
         'colors-outline-sentiment-primary':
           'var(--colors-outline-sentiment-primary)',
+        'colors-outline-neutral-strong': 'var(--colors-outline-neutral-strong)',
+        'colors-outline-neutral-standard':
+          'var(--colors-outline-neutral-standard)',
+
+        'colors-text-core-standard': 'var(--colors-text-core-standard)',
+        'colors-text-neutral-strong': 'var(--colors-text-neutral-strong)',
+        'colors-text-neutral-standard': 'var(--colors-text-neutral-standard)',
+        'colors-text-neutral-weak': 'var(--colors-text-neutral-weak)',
+        'colors-text-functional-danger': 'var(--colors-text-functional-danger)',
+        'colors-text-inverse-strong': 'var(--colors-text-inverse-strong)',
+        'colors-text-persist-light': 'var(--colors-text-persist-light)',
+        'colors-text-inverse-weak': 'var(--colors-text-inverse-weak)',
 
         primary: {
           DEFAULT: 'hsl(var(--primary))',
@@ -74,6 +86,11 @@ module.exports = {
           foreground: 'var(--background-core-weak-foreground)',
         },
 
+        'colors-background-inverse-standard': {
+          DEFAULT: 'var(--colors-background-inverse-standard)',
+          foreground: 'var(--colors-background-inverse-standard-foreground)',
+        },
+
         'color-background-brand-default': {
           DEFAULT: 'var(--color-background-brand-default)',
           foreground: 'var(--background-inverse-standard-foreground)',
@@ -96,7 +113,7 @@ module.exports = {
         },
         'colors-background-functional-solid-danger': {
           DEFAULT: 'var(--colors-background-functional-solid-danger)',
-          foreground: 'var(--background-inverse-standard-foreground)',
+          foreground: 'var(--colors-text-inverse-strong)',
         },
         'colors-background-functional-solid-notice': {
           DEFAULT: 'var(--colors-background-functional-solid-notice)',
@@ -142,6 +159,20 @@ module.exports = {
           DEFAULT: 'var(--colors-background-neutral-weak)',
           foreground: 'var(--background-inverse-standard-foreground)',
         },
+        'colors-background-sentiment-solid-primary': {
+          DEFAULT: 'var(--colors-background-sentiment-solid-primary)',
+          foreground: 'var(--background-inverse-standard-foreground)',
+        },
+        sidebar: {
+          DEFAULT: 'hsl(var(--sidebar-background))',
+          foreground: 'hsl(var(--sidebar-foreground))',
+          primary: 'hsl(var(--sidebar-primary))',
+          'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
+          accent: 'hsl(var(--sidebar-accent))',
+          'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+          border: 'hsl(var(--sidebar-border))',
+          ring: 'hsl(var(--sidebar-ring))',
+        },
       },
       borderRadius: {
         lg: `var(--radius)`,
@@ -172,5 +203,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [require('tailwindcss-animate'), require('@tailwindcss/line-clamp')],
 };

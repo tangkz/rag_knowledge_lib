@@ -1,3 +1,6 @@
+#
+#  Copyright 2025 The InfiniFlow Authors. All Rights Reserved.
+#
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
@@ -13,14 +16,17 @@
 
 import logging
 import os
-from copy import deepcopy
+import math
+import numpy as np
+import cv2
+from functools import cmp_to_key
 
-import onnxruntime as ort
-from huggingface_hub import snapshot_download
 
 from api.utils.file_utils import get_project_base_directory
-from .operators import *
-
+from .operators import *  # noqa: F403
+from .operators import preprocess
+from . import operators
+from .ocr import load_model
 
 class Recognizer(object):
     def __init__(self, label_list, task_name, model_dir=None):
@@ -39,24 +45,7 @@ class Recognizer(object):
             model_dir = os.path.join(
                         get_project_base_directory(),
                         "rag/res/deepdoc")
-            model_file_path = os.path.join(model_dir, task_name + ".onnx")
-            if not os.path.exists(model_file_path):
-                model_dir = snapshot_download(repo_id="InfiniFlow/deepdoc",
-                                              local_dir=os.path.join(get_project_base_directory(), "rag/res/deepdoc"),
-                                              local_dir_use_symlinks=False)
-                model_file_path = os.path.join(model_dir, task_name + ".onnx")
-        else:
-            model_file_path = os.path.join(model_dir, task_name + ".onnx")
-
-        if not os.path.exists(model_file_path):
-            raise ValueError("not find model file path {}".format(
-                model_file_path))
-        if False and ort.get_device() == "GPU":
-            options = ort.SessionOptions()
-            options.enable_cpu_mem_arena = False
-            self.ort_sess = ort.InferenceSession(model_file_path, options=options, providers=[('CUDAExecutionProvider')])
-        else:
-            self.ort_sess = ort.InferenceSession(model_file_path, providers=['CPUExecutionProvider'])
+        self.ort_sess, self.run_options = load_model(model_dir, task_name)
         self.input_names = [node.name for node in self.ort_sess.get_inputs()]
         self.output_names = [node.name for node in self.ort_sess.get_outputs()]
         self.input_shape = self.ort_sess.get_inputs()[0].shape[2:4]
@@ -64,30 +53,22 @@ class Recognizer(object):
 
     @staticmethod
     def sort_Y_firstly(arr, threashold):
-        # sort using y1 first and then x1
-        arr = sorted(arr, key=lambda r: (r["top"], r["x0"]))
-        for i in range(len(arr) - 1):
-            for j in range(i, -1, -1):
-                # restore the order using th
-                if abs(arr[j + 1]["top"] - arr[j]["top"]) < threashold \
-                        and arr[j + 1]["x0"] < arr[j]["x0"]:
-                    tmp = deepcopy(arr[j])
-                    arr[j] = deepcopy(arr[j + 1])
-                    arr[j + 1] = deepcopy(tmp)
+        def cmp(c1, c2):
+            diff = c1["top"] - c2["top"]
+            if abs(diff) < threashold:
+                diff = c1["x0"] - c2["x0"]
+            return diff
+        arr = sorted(arr, key=cmp_to_key(cmp))
         return arr
 
     @staticmethod
-    def sort_X_firstly(arr, threashold, copy=True):
-        # sort using y1 first and then x1
-        arr = sorted(arr, key=lambda r: (r["x0"], r["top"]))
-        for i in range(len(arr) - 1):
-            for j in range(i, -1, -1):
-                # restore the order using th
-                if abs(arr[j + 1]["x0"] - arr[j]["x0"]) < threashold \
-                        and arr[j + 1]["top"] < arr[j]["top"]:
-                    tmp = deepcopy(arr[j]) if copy else arr[j]
-                    arr[j] = deepcopy(arr[j + 1]) if copy else arr[j + 1]
-                    arr[j + 1] = deepcopy(tmp) if copy else tmp
+    def sort_X_firstly(arr, threashold):
+        def cmp(c1, c2):
+            diff = c1["x0"] - c2["x0"]
+            if abs(diff) < threashold:
+                diff = c1["top"] - c2["top"]
+            return diff
+        arr = sorted(arr, key=cmp_to_key(cmp))
         return arr
 
     @staticmethod
@@ -109,8 +90,6 @@ class Recognizer(object):
                     arr[j] = arr[j + 1]
                     arr[j + 1] = tmp
         return arr
-
-        return sorted(arr, key=lambda r: (r.get("C", r["x0"]), r["top"]))
 
     @staticmethod
     def sort_R_firstly(arr, thr=0):
@@ -140,11 +119,11 @@ class Recognizer(object):
             return 0
         x0_ = max(b["x0"], x0)
         x1_ = min(b["x1"], x1)
-        assert x0_ <= x1_, "Fuckedup! T:{},B:{},X0:{},X1:{} ==> {}".format(
+        assert x0_ <= x1_, "Bbox mismatch! T:{},B:{},X0:{},X1:{} ==> {}".format(
             tp, btm, x0, x1, b)
         tp_ = max(b["top"], tp)
         btm_ = min(b["bottom"], btm)
-        assert tp_ <= btm_, "Fuckedup! T:{},B:{},X0:{},X1:{} => {}".format(
+        assert tp_ <= btm_, "Bbox mismatch! T:{},B:{},X0:{},X1:{} => {}".format(
             tp, btm, x0, x1, b)
         ov = (btm_ - tp_) * (x1_ - x0_) if x1 - \
                                            x0 != 0 and btm - tp != 0 else 0
@@ -277,7 +256,8 @@ class Recognizer(object):
             return
         min_dis, min_i = 1000000, None
         for i,b in enumerate(boxes):
-            if box.get("layoutno", "0") != b.get("layoutno", "0"): continue
+            if box.get("layoutno", "0") != b.get("layoutno", "0"):
+                continue
             dis = min(abs(box["x0"] - b["x0"]), abs(box["x1"] - b["x1"]), abs(box["x0"]+box["x1"] - b["x1"] - b["x0"])/2)
             if dis < min_dis:
                 min_i = i
@@ -313,7 +293,7 @@ class Recognizer(object):
             ]:
                 new_op_info = op_info.copy()
                 op_type = new_op_info.pop('type')
-                preprocess_ops.append(eval(op_type)(**new_op_info))
+                preprocess_ops.append(getattr(operators, op_type)(**new_op_info))
 
             for im_path in image_list:
                 im, im_info = preprocess(im_path, preprocess_ops)
@@ -402,7 +382,8 @@ class Recognizer(object):
         scores = np.max(boxes[:, 4:], axis=1)
         boxes = boxes[scores > thr, :]
         scores = scores[scores > thr]
-        if len(boxes) == 0: return []
+        if len(boxes) == 0:
+            return []
 
         # Get the class with the highest confidence
         class_ids = np.argmax(boxes[:, 4:], axis=1)
@@ -432,7 +413,8 @@ class Recognizer(object):
         for i in range(len(image_list)):
             if not isinstance(image_list[i], np.ndarray):
                 imgs.append(np.array(image_list[i]))
-            else: imgs.append(image_list[i])
+            else:
+                imgs.append(image_list[i])
 
         batch_loop_cnt = math.ceil(float(len(imgs)) / batch_size)
         for i in range(batch_loop_cnt):
@@ -442,7 +424,7 @@ class Recognizer(object):
             inputs = self.preprocess(batch_image_list)
             logging.debug("preprocess")
             for ins in inputs:
-                bb = self.postprocess(self.ort_sess.run(None, {k:v for k,v in ins.items() if k in self.input_names})[0], ins, thr)
+                bb = self.postprocess(self.ort_sess.run(None, {k:v for k,v in ins.items() if k in self.input_names}, self.run_options)[0], ins, thr)
                 res.append(bb)
 
         #seeit.save_results(image_list, res, self.label_list, threshold=thr)

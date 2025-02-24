@@ -27,6 +27,7 @@ import {
 } from 'antd';
 import classNames from 'classnames';
 import get from 'lodash/get';
+import { Paperclip } from 'lucide-react';
 import {
   ChangeEventHandler,
   memo,
@@ -34,9 +35,9 @@ import {
   useEffect,
   useRef,
   useState,
+  KeyboardEventHandler,
 } from 'react';
 import FileIcon from '../file-icon';
-import SvgIcon from '../svg-icon';
 import styles from './index.less';
 
 type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
@@ -98,7 +99,6 @@ const MessageInput = ({
   const { data: documentInfos, setDocumentIds } = useFetchDocumentInfosByIds();
   const { uploadAndParseDocument } = useUploadAndParseDocument(uploadMethod);
   const conversationIdRef = useRef(conversationId);
-
   const [fileList, setFileList] = useState<UploadFile[]>([]);
 
   const handlePreview = async (file: UploadFile) => {
@@ -156,6 +156,13 @@ const MessageInput = ({
     setFileList([]);
   }, [fileList, onPressEnter, isUploadingFile]);
 
+  const handleInputKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
+    if (e.key === 'Enter' && !e.nativeEvent.shiftKey) {
+      e.preventDefault();
+      handlePressEnter();
+    }
+  };
+
   const handleRemove = useCallback(
     async (file: UploadFile) => {
       const ids = get(file, 'response.data', []);
@@ -203,52 +210,46 @@ const MessageInput = ({
 
   return (
     <Flex gap={20} vertical className={styles.messageInputWrapper}>
-      <Input
-        size="large"
-        placeholder={t('sendPlaceholder')}
-        value={value}
-        disabled={disabled}
-        className={classNames({ [styles.inputWrapper]: fileList.length === 0 })}
-        suffix={
-          <Space>
-            {showUploadIcon && (
-              <Upload
-                onPreview={handlePreview}
-                onChange={handleChange}
-                multiple={false}
-                onRemove={handleRemove}
-                showUploadList={false}
-                beforeUpload={() => {
-                  return false;
-                }}
-              >
-                <Button
-                  type={'text'}
-                  disabled={disabled}
-                  icon={
-                    <SvgIcon
-                      name="paper-clip"
-                      width={18}
-                      height={22}
-                      disabled={disabled}
-                    ></SvgIcon>
-                  }
-                ></Button>
-              </Upload>
-            )}
-            <Button
-              type="primary"
-              onClick={handlePressEnter}
-              loading={sendLoading}
-              disabled={sendDisabled || isUploadingFile}
+      <Flex align="center" gap={8}>
+        <Input.TextArea
+          size="large"
+          placeholder={t('sendPlaceholder')}
+          value={value}
+          disabled={disabled}
+          className={classNames({ [styles.inputWrapper]: fileList.length === 0 })}
+          onKeyDown={handleInputKeyDown}
+          onChange={onInputChange}
+          autoSize={{ minRows: 1, maxRows: 6 }}
+        />
+        <Space>
+          {showUploadIcon && (
+            <Upload
+              onPreview={handlePreview}
+              onChange={handleChange}
+              multiple={false}
+              onRemove={handleRemove}
+              showUploadList={false}
+              beforeUpload={() => {
+                return false;
+              }}
             >
-              {t('send')}
-            </Button>
-          </Space>
-        }
-        onPressEnter={handlePressEnter}
-        onChange={onInputChange}
-      />
+              <Button
+                type={'text'}
+                disabled={disabled}
+                icon={<Paperclip />}
+              ></Button>
+            </Upload>
+          )}
+          <Button
+            type="primary"
+            onClick={handlePressEnter}
+            loading={sendLoading}
+            disabled={sendDisabled || isUploadingFile}
+          >
+            {t('send')}
+          </Button>
+        </Space>
+      </Flex>
 
       {fileList.length > 0 && (
         <List

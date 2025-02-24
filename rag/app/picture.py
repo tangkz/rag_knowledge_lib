@@ -1,3 +1,6 @@
+#
+#  Copyright 2025 The InfiniFlow Authors. All Rights Reserved.
+#
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
@@ -10,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 import io
 
 import numpy as np
@@ -33,7 +37,7 @@ def chunk(filename, binary, tenant_id, lang, callback=None, **kwargs):
     txt = "\n".join([t[0] for _, t in bxs if t[0]])
     eng = lang.lower() == "english"
     callback(0.4, "Finish OCR: (%s ...)" % txt[:12])
-    if (eng and len(txt.split(" ")) > 32) or len(txt) > 32:
+    if (eng and len(txt.split()) > 32) or len(txt) > 32:
         tokenize(doc, txt, eng)
         callback(0.8, "OCR results is too long to use CV LLM.")
         return [doc]
@@ -41,7 +45,10 @@ def chunk(filename, binary, tenant_id, lang, callback=None, **kwargs):
     try:
         callback(0.4, "Use CV LLM to describe the picture.")
         cv_mdl = LLMBundle(tenant_id, LLMType.IMAGE2TEXT, lang=lang)
-        ans = cv_mdl.describe(binary)
+        img_binary = io.BytesIO()
+        img.save(img_binary, format='JPEG')
+        img_binary.seek(0)
+        ans = cv_mdl.describe(img_binary.read())
         callback(0.8, "CV LLM respond: %s ..." % ans[:32])
         txt += "\n" + ans
         tokenize(doc, txt, eng)

@@ -1,3 +1,6 @@
+#
+#  Copyright 2025 The InfiniFlow Authors. All Rights Reserved.
+#
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
@@ -41,7 +44,7 @@ def main(args):
             "score": 1} for b, t in bxs if b[0][0] <= b[1][0] and b[0][1] <= b[-1][1]]
         img = draw_box(images[i], bxs, ["ocr"], 1.)
         img.save(outputs[i], quality=95)
-        with open(outputs[i] + ".txt", "w+") as f:
+        with open(outputs[i] + ".txt", "w+", encoding='utf-8') as f:
             f.write("\n".join([o["text"] for o in bxs]))
 
 

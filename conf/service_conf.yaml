@@ -17,9 +17,12 @@ es:
   hosts: 'http://es01:1200'
   username: 'elastic'
   password: 'infini_rag_flow'
+infinity:
+  uri: 'infinity:23817'
+  db_name: 'default_db'
 redis:
   db: 1
-  password: 'infini_rag_flow' 
+  password: 'infini_rag_flow'
   host: 'redis:6379'
 
 # postgres:
@@ -31,7 +34,6 @@ redis:
 #   max_connections: 100
 #   stale_timeout: 30
 # s3:
-#   endpoint: 'endpoint'
 #   access_key: 'access_key'
 #   secret_key: 'secret_key'
 #   region: 'region'

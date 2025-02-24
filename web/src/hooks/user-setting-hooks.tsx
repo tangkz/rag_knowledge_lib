@@ -46,7 +46,9 @@ export const useFetchUserInfo = (): ResponseGetType<IUserInfo> => {
   return { data, loading };
 };
 
-export const useFetchTenantInfo = (): ResponseGetType<ITenantInfo> => {
+export const useFetchTenantInfo = (
+  showEmptyModelWarn = false,
+): ResponseGetType<ITenantInfo> => {
   const { t } = useTranslation();
   const { data, isFetching: loading } = useQuery({
     queryKey: ['tenantInfo'],
@@ -58,7 +60,10 @@ export const useFetchTenantInfo = (): ResponseGetType<ITenantInfo> => {
         // llm_id is chat_id
         // asr_id is speech2txt
         const { data } = res;
-        if (isEmpty(data.embd_id) || isEmpty(data.llm_id)) {
+        if (
+          showEmptyModelWarn &&
+          (isEmpty(data.embd_id) || isEmpty(data.llm_id))
+        ) {
           Modal.warning({
             title: t('common.warn'),
             content: (
@@ -90,7 +95,7 @@ export const useSelectParserList = (): Array<{
   value: string;
   label: string;
 }> => {
-  const { data: tenantInfo } = useFetchTenantInfo();
+  const { data: tenantInfo } = useFetchTenantInfo(true);
 
   const parserList = useMemo(() => {
     const parserArray: Array<string> = tenantInfo?.parser_ids?.split(',') ?? [];
@@ -169,17 +174,34 @@ export const useFetchSystemStatus = () => {
   };
 };
 
-export const useFetchSystemTokenList = (params: Record<string, any>) => {
+export const useFetchManualSystemTokenList = () => {
+  const {
+    data,
+    isPending: loading,
+    mutateAsync,
+  } = useMutation({
+    mutationKey: ['fetchManualSystemTokenList'],
+    mutationFn: async () => {
+      const { data } = await userService.listToken();
+
+      return data?.data ?? [];
+    },
+  });
+
+  return { data, loading, fetchSystemTokenList: mutateAsync };
+};
+
+export const useFetchSystemTokenList = () => {
   const {
     data,
     isFetching: loading,
     refetch,
   } = useQuery<IToken[]>({
-    queryKey: ['fetchSystemTokenList', params],
+    queryKey: ['fetchSystemTokenList'],
     initialData: [],
     gcTime: 0,
     queryFn: async () => {
-      const { data } = await userService.listToken(params);
+      const { data } = await userService.listToken();
 
       return data?.data ?? [];
     },
@@ -213,6 +235,7 @@ export const useRemoveSystemToken = () => {
 
 export const useCreateSystemToken = () => {
   const queryClient = useQueryClient();
+
   const {
     data,
     isPending: loading,

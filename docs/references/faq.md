@@ -1,11 +1,11 @@
 ---
-sidebar_position: 3
+sidebar_position: 10
 slug: /faq
 ---
 
 # Frequently asked questions
 
-Queries regarding general features, troubleshooting, performance, and more.
+Queries regarding general features, troubleshooting, usage, and more.
 
 ---
 
@@ -19,6 +19,35 @@ The "garbage in garbage out" status quo remains unchanged despite the fact that 
 
 - Fine-grained document parsing: Document parsing involves images and tables, with the flexibility for you to intervene as needed.
 - Traceable answers with reduced hallucinations: You can trust RAGFlow's responses as you can view the citations and references supporting them.
+
+---
+
+### Where to find the version of RAGFlow? How to interprete it?
+
+You can find the RAGFlow version number on the **System** page of the UI:
+
+![Image](https://github.com/user-attachments/assets/20cf7213-2537-4e18-a88c-4dadf6228c6b)
+
+If you build RAGFlow from source, the version number is also in the system log:
+
+```
+        ____   ___    ______ ______ __               
+       / __ \ /   |  / ____// ____// /____  _      __
+      / /_/ // /| | / / __ / /_   / // __ \| | /| / /
+     / _, _// ___ |/ /_/ // __/  / // /_/ /| |/ |/ / 
+    /_/ |_|/_/  |_|\____//_/    /_/ \____/ |__/|__/                             
+
+2025-02-18 10:10:43,835 INFO     1445658 RAGFlow version: v0.16.0-50-g6daae7f2 full
+```
+
+Where:
+
+- `v0.16.0`: The officially published release.
+- `50`: The number of git commits since the official release.
+- `g6daae7f2`: `g` is the prefix, and `6daae7f2` is the first seven characters of the current commit ID.
+- `full`/`slim`: The RAGFlow edition.
+  - `full`: The full RAGFlow edition.
+  - `slim`: The RAGFlow edition without embedding models and Python packages.
 
 ---
 
@@ -36,16 +65,16 @@ RAGFlow has a number of built-in models for document structure parsing, which ac
 
 ### Which architectures or devices does RAGFlow support?
 
-We officially support x86 CPU and nvidia GPU. While we also test RAGFlow on ARM64 platforms, we do not plan to maintain RAGFlow Docker images for ARM.
+We officially support x86 CPU and nvidia GPU. While we also test RAGFlow on ARM64 platforms, we do not maintain RAGFlow Docker images for ARM. If you are on an ARM platform, follow [this guide](https://ragflow.io/docs/dev/build_docker_image) to build a RAGFlow Docker image.
 
 ---
 
 ### Which embedding models can be deployed locally?
 
-RAGFlow offers two Docker image editions, `dev-slim` and `dev`:  
+RAGFlow offers two Docker image editions, `v0.16.0-slim` and `v0.16.0`:  
   
-- `infiniflow/ragflow:dev-slim` (default): The RAGFlow Docker image without embedding models.  
-- `infiniflow/ragflow:dev`: The RAGFlow Docker image with embedding models including:
+- `infiniflow/ragflow:v0.16.0-slim` (default): The RAGFlow Docker image without embedding models.  
+- `infiniflow/ragflow:v0.16.0`: The RAGFlow Docker image with embedding models including:
   - Built-in embedding models:
     - `BAAI/bge-large-zh-v1.5`
     - `BAAI/bge-reranker-v2-m3`
@@ -81,9 +110,13 @@ No, this feature is not supported.
 
 ---
 
-### Do you support multiple rounds of dialogues, i.e., referencing previous dialogues as context for the current dialogue?
+### Do you support multiple rounds of dialogues, referencing previous dialogues as context for the current query?
 
-This feature and the related APIs are still in development. Contributions are welcome.
+Yes, we support enhancing user queries based on existing context of an ongoing conversation:
+
+1. On the **Chat** page, hover over the desired assistant and select **Edit**.
+2. In the **Chat Configuration** popup, click the **Prompt Engine** tab.
+3. Switch on **Multi-turn optimization** to enable this feature.
 
 ---
 
@@ -248,48 +281,50 @@ tail -f ragflow/docker/ragflow-logs/*.log
 
 #### How to check the status of each component in RAGFlow?
 
-```bash
-$ docker ps
-```
-
-*The system displays the following if all your RAGFlow components are running properly:*
-
-```
-5bc45806b680   infiniflow/ragflow:latest     "./entrypoint.sh"        11 hours ago   Up 11 hours               0.0.0.0:80->80/tcp, :::80->80/tcp, 0.0.0.0:443->443/tcp, :::443->443/tcp, 0.0.0.0:9380->9380/tcp, :::9380->9380/tcp   ragflow-server
-91220e3285dd   docker.elastic.co/elasticsearch/elasticsearch:8.11.3   "/bin/tini -- /usr/l…"   11 hours ago   Up 11 hours (healthy)     9300/tcp, 0.0.0.0:9200->9200/tcp, :::9200->9200/tcp           ragflow-es-01
-d8c86f06c56b   mysql:5.7.18        "docker-entrypoint.s…"   7 days ago     Up 16 seconds (healthy)   0.0.0.0:3306->3306/tcp, :::3306->3306/tcp     ragflow-mysql
-cd29bcb254bc   quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z       "/usr/bin/docker-ent…"   2 weeks ago    Up 11 hours      0.0.0.0:9001->9001/tcp, :::9001->9001/tcp, 0.0.0.0:9000->9000/tcp, :::9000->9000/tcp     ragflow-minio
-```
-
----
-
-#### `Exception: Can't connect to ES cluster`
-
-1. Check the status of your Elasticsearch component:
+1. Check the status of the Elasticsearch Docker container:
 
    ```bash
    $ docker ps
    ```
 
-   *The status of a 'healthy' Elasticsearch component in your RAGFlow should look as follows:*
-  
+   *The following is an example result:*
+
+   ```bash
+   5bc45806b680   infiniflow/ragflow:latest     "./entrypoint.sh"        11 hours ago   Up 11 hours               0.0.0.0:80->80/tcp, :::80->80/tcp, 0.0.0.0:443->443/tcp, :::443->443/tcp, 0.0.0.0:9380->9380/tcp, :::9380->9380/tcp   ragflow-server
+   91220e3285dd   docker.elastic.co/elasticsearch/elasticsearch:8.11.3   "/bin/tini -- /usr/l…"   11 hours ago   Up 11 hours (healthy)     9300/tcp, 0.0.0.0:9200->9200/tcp, :::9200->9200/tcp           ragflow-es-01
+   d8c86f06c56b   mysql:5.7.18        "docker-entrypoint.s…"   7 days ago     Up 16 seconds (healthy)   0.0.0.0:3306->3306/tcp, :::3306->3306/tcp     ragflow-mysql
+   cd29bcb254bc   quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z       "/usr/bin/docker-ent…"   2 weeks ago    Up 11 hours      0.0.0.0:9001->9001/tcp, :::9001->9001/tcp, 0.0.0.0:9000->9000/tcp, :::9000->9000/tcp     ragflow-minio
+   ```
+
+2. Follow [this document](../guides/run_health_check.md) to check the health status of the Elasticsearch service.
+
+:::danger IMPORTANT
+The status of a Docker container status does not necessarily reflect the status of the service. You may find that your services are unhealthy even when the corresponding Docker containers are up running. Possible reasons for this include network failures, incorrect port numbers, or DNS issues.
+:::
+
+---
+
+#### `Exception: Can't connect to ES cluster`
+
+1. Check the status of the Elasticsearch Docker container:
+
+   ```bash
+   $ docker ps
+   ```
+
+   *The status of a healthy Elasticsearch component should look as follows:*  
+
    ```
    91220e3285dd   docker.elastic.co/elasticsearch/elasticsearch:8.11.3   "/bin/tini -- /usr/l…"   11 hours ago   Up 11 hours (healthy)     9300/tcp, 0.0.0.0:9200->9200/tcp, :::9200->9200/tcp           ragflow-es-01
    ```
 
-2. If your container keeps restarting, ensure `vm.max_map_count` >= 262144 as per [this README](https://github.com/infiniflow/ragflow?tab=readme-ov-file#-start-up-the-server). Updating the `vm.max_map_count` value in **/etc/sysctl.conf** is required, if you wish to keep your change permanent. This configuration works only for Linux.
+2. Follow [this document](../guides/run_health_check.md) to check the health status of the Elasticsearch service.
 
-3. If your issue persists, ensure that the ES host setting is correct:
+:::danger IMPORTANT
+The status of a Docker container status does not necessarily reflect the status of the service. You may find that your services are unhealthy even when the corresponding Docker containers are up running. Possible reasons for this include network failures, incorrect port numbers, or DNS issues.
+:::
 
-    - If you are running RAGFlow with Docker, it is in **docker/service_conf.yml**. Set it as follows:
-    ```
-    es:
-      hosts: 'http://es01:9200'
-    ```
-    - If you run RAGFlow outside of Docker, verify the ES host setting in **conf/service_conf.yml** using:
-    ```bash
-    curl http://<IP_OF_ES>:<PORT_OF_ES>
-    ```
+3. If your container keeps restarting, ensure `vm.max_map_count` >= 262144 as per [this README](https://github.com/infiniflow/ragflow?tab=readme-ov-file#-start-up-the-server). Updating the `vm.max_map_count` value in **/etc/sysctl.conf** is required, if you wish to keep your change permanent. Note that this configuration works only for Linux.
 
 ---
 
@@ -329,14 +364,13 @@ Ensure that you update the **MAX_CONTENT_LENGTH** environment variable:
 1. In **ragflow/docker/.env**, uncomment environment variable `MAX_CONTENT_LENGTH`:
 
    ```
-   MAX_CONTENT_LENGTH=128000000
+   MAX_CONTENT_LENGTH=176160768 # 168MB
    ```
 
-2. Update **docker-compose.yml**:
+2. Update **ragflow/docker/nginx/nginx.conf**:
 
    ```
-   environment:
-     - MAX_CONTENT_LENGTH=${MAX_CONTENT_LENGTH}
+   client_max_body_size 168M
    ```
 
 3. Restart the RAGFlow server:
@@ -349,13 +383,23 @@ Ensure that you update the **MAX_CONTENT_LENGTH** environment variable:
 
 #### `FileNotFoundError: [Errno 2] No such file or directory`
 
-1. Check if the status of your MinIO container is healthy:
+1. Check the status of the MinIO Docker container:
 
    ```bash
-   docker ps
+   $ docker ps
    ```
 
-2. Ensure that the username and password settings of MySQL and MinIO in **docker/.env** are in line with those in **docker/service_conf.yml**.
+   *The status of a healthy Elasticsearch component should look as follows:*  
+
+   ```bash
+   cd29bcb254bc   quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z       "/usr/bin/docker-ent…"   2 weeks ago    Up 11 hours      0.0.0.0:9001->9001/tcp, :::9001->9001/tcp, 0.0.0.0:9000->9000/tcp, :::9000->9000/tcp     ragflow-minio
+   ```
+
+2. Follow [this document](../guides/run_health_check.md) to check the health status of the Elasticsearch service.
+
+:::danger IMPORTANT
+The status of a Docker container status does not necessarily reflect the status of the service. You may find that your services are unhealthy even when the corresponding Docker containers are up running. Possible reasons for this include network failures, incorrect port numbers, or DNS issues.
+:::
 
 ---
 
@@ -365,7 +409,7 @@ Ensure that you update the **MAX_CONTENT_LENGTH** environment variable:
 
 ### How to increase the length of RAGFlow responses?
 
-1. Right click the desired dialog to display the **Chat Configuration** window.
+1. Right-click the desired dialog to display the **Chat Configuration** window.
 2. Switch to the **Model Setting** tab and adjust the **Max Tokens** slider to get the desired length.
 3. Click **OK** to confirm your change.
 
@@ -374,6 +418,14 @@ Ensure that you update the **MAX_CONTENT_LENGTH** environment variable:
 ### How to run RAGFlow with a locally deployed LLM?
 
 You can use Ollama or Xinference to deploy local LLM. See [here](../guides/deploy_local_llm.mdx) for more information.
+
+---
+
+### Is it possible to add an LLM that is not supported?
+
+If your model is not currently supported but has APIs compatible with those of OpenAI, click **OpenAI-API-Compatible** on the **Model providers** page to configure your model:
+
+![openai-api-compatible](https://github.com/user-attachments/assets/b1e964f2-b86e-41af-8528-fd8a96dc5f6f)
 
 ---
 
@@ -391,8 +443,8 @@ See [here](../guides/deploy_local_llm.mdx) for more information.
 This error occurs because there are too many chunks matching your search criteria. Try reducing the **TopN** and increasing **Similarity threshold** to fix this issue:
 
 1. Click **Chat** in the middle top of the page.
-2. Right click the desired conversation > **Edit** > **Prompt Engine**
-3. Reduce the **TopN** and/or raise **Silimarity threshold**.
+2. Right-click the desired conversation > **Edit** > **Prompt Engine**
+3. Reduce the **TopN** and/or raise **Similarity threshold**.
 4. Click **OK** to confirm your changes.
 
 ![topn](https://github.com/infiniflow/ragflow/assets/93570324/7ec72ab3-0dd2-4cff-af44-e2663b67b2fc)

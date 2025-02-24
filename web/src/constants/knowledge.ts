@@ -2,7 +2,10 @@ export enum KnowledgeRouteKey {
   Dataset = 'dataset',
   Testing = 'testing',
   Configuration = 'configuration',
+  KnowledgeGraph = 'knowledgeGraph',
 }
+
+export const DatasetBaseKey = 'dataset';
 
 export enum RunningStatus {
   UNSTART = '0', // need to run
@@ -54,4 +57,26 @@ export enum LlmModelType {
 export enum KnowledgeSearchParams {
   DocumentId = 'doc_id',
   KnowledgeId = 'id',
+}
+
+export enum DocumentType {
+  Virtual = 'virtual',
+  Visual = 'visual',
+}
+
+export enum DocumentParserType {
+  Naive = 'naive',
+  Qa = 'qa',
+  Resume = 'resume',
+  Manual = 'manual',
+  Table = 'table',
+  Paper = 'paper',
+  Book = 'book',
+  Laws = 'laws',
+  Presentation = 'presentation',
+  Picture = 'picture',
+  One = 'one',
+  Audio = 'audio',
+  Email = 'email',
+  Tag = 'tag',
 }
