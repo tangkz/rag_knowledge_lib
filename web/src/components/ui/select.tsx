@@ -26,7 +26,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      'flex h-10 w-full items-center justify-between rounded-md border border-input bg-colors-background-inverse-weak px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
+      'flex h-8 w-full items-center justify-between rounded-md border border-input bg-colors-background-inverse-weak px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1',
       className,
     )}
     {...props}
@@ -186,11 +186,13 @@ export type RAGFlowSelectGroupOptionType = {
   options: RAGFlowSelectOptionType[];
 };
 
-type RAGFlowSelectProps = Partial<ControllerRenderProps> & {
+export type RAGFlowSelectProps = Partial<ControllerRenderProps> & {
   FormControlComponent?: typeof FormControl;
   options?: (RAGFlowSelectOptionType | RAGFlowSelectGroupOptionType)[];
   allowClear?: boolean;
   placeholder?: React.ReactNode;
+  contentProps?: React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>;
+  triggerClassName?: string;
 } & SelectPrimitive.SelectProps;
 
 /**
@@ -220,11 +222,14 @@ export const RAGFlowSelect = forwardRef<
     options = [],
     allowClear,
     placeholder,
+    contentProps = {},
+    defaultValue,
+    triggerClassName,
   },
   ref,
 ) {
   const [key, setKey] = React.useState(+new Date());
-  const [value, setValue] = React.useState<string | undefined>(undefined);
+  const [value, setValue] = React.useState<string | undefined>(defaultValue);
 
   const FormControlWidget = FormControlComponent
     ? FormControlComponent
@@ -256,16 +261,16 @@ export const RAGFlowSelect = forwardRef<
     <Select onValueChange={handleChange} value={value} key={key}>
       <FormControlWidget>
         <SelectTrigger
-          className="bg-colors-background-inverse-weak"
           value={value}
           onReset={handleReset}
           allowClear={allowClear}
           ref={ref}
+          className={triggerClassName}
         >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
       </FormControlWidget>
-      <SelectContent>
+      <SelectContent {...contentProps}>
         {options.map((o, idx) => {
           if ('value' in o) {
             return (

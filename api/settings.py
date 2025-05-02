@@ -16,14 +16,17 @@
 import os
 from datetime import date
 from enum import IntEnum, Enum
+import json
 import rag.utils.es_conn
 import rag.utils.infinity_conn
+import rag.utils.opensearch_coon
 
 import rag.utils
 from rag.nlp import search
 from graphrag import search as kg_search
 from api.utils import get_base_config, decrypt_database_config
 from api.constants import RAG_FLOW_SERVICE_NAME
+from api.utils.file_utils import get_project_base_directory
 
 LIGHTEN = int(os.environ.get('LIGHTEN', "0"))
 
@@ -40,6 +43,7 @@ PARSERS = None
 HOST_IP = None
 HOST_PORT = None
 SECRET_KEY = None
+FACTORY_LLM_INFOS = None
 
 DATABASE_TYPE = os.getenv("DB_TYPE", 'mysql')
 DATABASE = decrypt_database_config(name=DATABASE_TYPE)
@@ -52,16 +56,19 @@ CLIENT_AUTHENTICATION = None
 HTTP_APP_KEY = None
 GITHUB_OAUTH = None
 FEISHU_OAUTH = None
-
+OAUTH_CONFIG = None
 DOC_ENGINE = None
 docStoreConn = None
 
 retrievaler = None
 kg_retrievaler = None
 
+# user registration switch
+REGISTER_ENABLED = 1
+
 
 def init_settings():
-    global LLM, LLM_FACTORY, LLM_BASE_URL, LIGHTEN, DATABASE_TYPE, DATABASE
+    global LLM, LLM_FACTORY, LLM_BASE_URL, LIGHTEN, DATABASE_TYPE, DATABASE, FACTORY_LLM_INFOS, REGISTER_ENABLED
     LIGHTEN = int(os.environ.get('LIGHTEN', "0"))
     DATABASE_TYPE = os.getenv("DB_TYPE", 'mysql')
     DATABASE = decrypt_database_config(name=DATABASE_TYPE)
@@ -69,6 +76,16 @@ def init_settings():
     LLM_DEFAULT_MODELS = LLM.get("default_models", {})
     LLM_FACTORY = LLM.get("factory", "Tongyi-Qianwen")
     LLM_BASE_URL = LLM.get("base_url")
+    try:
+        REGISTER_ENABLED = int(os.environ.get("REGISTER_ENABLED", "1"))
+    except Exception:
+        pass  
+    
+    try:
+        with open(os.path.join(get_project_base_directory(), "conf", "llm_factories.json"), "r") as f:
+            FACTORY_LLM_INFOS = json.load(f)["factory_llm_infos"]
+    except Exception:
+        FACTORY_LLM_INFOS = []
 
     global CHAT_MDL, EMBEDDING_MDL, RERANK_MDL, ASR_MDL, IMAGE2TEXT_MDL
     if not LIGHTEN:
@@ -93,7 +110,7 @@ def init_settings():
     API_KEY = LLM.get("api_key", "")
     PARSERS = LLM.get(
         "parsers",
-        "naive:General,qa:Q&A,resume:Resume,manual:Manual,table:Table,paper:Paper,book:Book,laws:Laws,presentation:Presentation,picture:Picture,one:One,audio:Audio,knowledge_graph:Knowledge Graph,email:Email,tag:Tag")
+        "naive:General,qa:Q&A,resume:Resume,manual:Manual,table:Table,paper:Paper,book:Book,laws:Laws,presentation:Presentation,picture:Picture,one:One,audio:Audio,email:Email,tag:Tag")
 
     HOST_IP = get_base_config(RAG_FLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
     HOST_PORT = get_base_config(RAG_FLOW_SERVICE_NAME, {}).get("http_port")
@@ -102,7 +119,7 @@ def init_settings():
         RAG_FLOW_SERVICE_NAME,
         {}).get("secret_key", str(date.today()))
 
-    global AUTHENTICATION_CONF, CLIENT_AUTHENTICATION, HTTP_APP_KEY, GITHUB_OAUTH, FEISHU_OAUTH
+    global AUTHENTICATION_CONF, CLIENT_AUTHENTICATION, HTTP_APP_KEY, GITHUB_OAUTH, FEISHU_OAUTH, OAUTH_CONFIG
     # authentication
     AUTHENTICATION_CONF = get_base_config("authentication", {})
 
@@ -114,13 +131,18 @@ def init_settings():
     GITHUB_OAUTH = get_base_config("oauth", {}).get("github")
     FEISHU_OAUTH = get_base_config("oauth", {}).get("feishu")
 
+    OAUTH_CONFIG = get_base_config("oauth", {})
+
     global DOC_ENGINE, docStoreConn, retrievaler, kg_retrievaler
     DOC_ENGINE = os.environ.get('DOC_ENGINE', "elasticsearch")
+    # DOC_ENGINE = os.environ.get('DOC_ENGINE', "opensearch")
     lower_case_doc_engine = DOC_ENGINE.lower()
     if lower_case_doc_engine == "elasticsearch":
         docStoreConn = rag.utils.es_conn.ESConnection()
     elif lower_case_doc_engine == "infinity":
         docStoreConn = rag.utils.infinity_conn.InfinityConnection()
+    elif lower_case_doc_engine == "opensearch":
+        docStoreConn = rag.utils.opensearch_coon.OSConnection()
     else:
         raise Exception(f"Not supported doc engine: {DOC_ENGINE}")
 

@@ -25,7 +25,7 @@ from flask_login import login_required, current_user
 from deepdoc.parser.html_parser import RAGFlowHtmlParser
 from rag.nlp import search
 
-from api.db import FileType, TaskStatus, ParserType, FileSource
+from api.db import VALID_FILE_TYPES, VALID_TASK_STATUS, FileType, TaskStatus, ParserType, FileSource
 from api.db.db_models import File, Task
 from api.db.services.file2document_service import File2DocumentService
 from api.db.services.file_service import FileService
@@ -71,11 +71,13 @@ def upload():
     if not e:
         raise LookupError("Can't find this knowledgebase!")
 
-    err, _ = FileService.upload_document(kb, file_objs, current_user.id)
+    err, files = FileService.upload_document(kb, file_objs, current_user.id)
+    files = [f[0] for f in files] # remove the blob
+    
     if err:
         return get_json_result(
-            data=False, message="\n".join(err), code=settings.RetCode.SERVER_ERROR)
-    return get_json_result(data=True)
+            data=files, message="\n".join(err), code=settings.RetCode.SERVER_ERROR)
+    return get_json_result(data=files)
 
 
 @manager.route('/web_crawl', methods=['POST'])  # noqa: F821
@@ -181,7 +183,7 @@ def create():
         return server_error_response(e)
 
 
-@manager.route('/list', methods=['GET'])  # noqa: F821
+@manager.route('/list', methods=['POST'])  # noqa: F821
 @login_required
 def list_docs():
     kb_id = request.args.get("kb_id")
@@ -199,13 +201,32 @@ def list_docs():
             code=settings.RetCode.OPERATING_ERROR)
     keywords = request.args.get("keywords", "")
 
-    page_number = int(request.args.get("page", 1))
-    items_per_page = int(request.args.get("page_size", 15))
+    page_number = int(request.args.get("page", 0))
+    items_per_page = int(request.args.get("page_size", 0))
     orderby = request.args.get("orderby", "create_time")
     desc = request.args.get("desc", True)
+
+    req = request.get_json()
+
+    run_status = req.get("run_status", [])
+    if run_status:
+        invalid_status = {s for s in run_status if s not in VALID_TASK_STATUS}
+        if invalid_status:
+            return get_data_error_result(
+                message=f"Invalid filter run status conditions: {', '.join(invalid_status)}"
+            )
+
+    types = req.get("types", [])
+    if types:
+        invalid_types = {t for t in types if t not in VALID_FILE_TYPES}
+        if invalid_types:
+            return get_data_error_result(
+                message=f"Invalid filter conditions: {', '.join(invalid_types)} type{'s' if len(invalid_types) > 1 else ''}"
+            )
+
     try:
         docs, tol = DocumentService.get_by_kb_id(
-            kb_id, page_number, items_per_page, orderby, desc, keywords)
+            kb_id, page_number, items_per_page, orderby, desc, keywords, run_status, types)
 
         for doc_item in docs:
             if doc_item['thumbnail'] and not doc_item['thumbnail'].startswith(IMG_BASE64_PREFIX):
@@ -329,10 +350,12 @@ def rm():
                     message="Database error (Document removal)!")
 
             f2d = File2DocumentService.get_by_document_id(doc_id)
-            FileService.filter_delete([File.source_type == FileSource.KNOWLEDGEBASE, File.id == f2d[0].file_id])
+            deleted_file_count = 0
+            if f2d:
+                deleted_file_count = FileService.filter_delete([File.source_type == FileSource.KNOWLEDGEBASE, File.id == f2d[0].file_id])
             File2DocumentService.delete_by_document_id(doc_id)
-
-            STORAGE_IMPL.rm(b, n)
+            if deleted_file_count > 0:
+                STORAGE_IMPL.rm(b, n)
         except Exception as e:
             errors += str(e)
 
@@ -345,7 +368,7 @@ def rm():
 @manager.route('/run', methods=['POST'])  # noqa: F821
 @login_required
 @validate_request("doc_ids", "run")
-def run():
+def run(): 
     req = request.json
     for doc_id in req["doc_ids"]:
         if not DocumentService.accessible(doc_id, current_user.id):
@@ -378,7 +401,7 @@ def run():
                 doc = doc.to_dict()
                 doc["tenant_id"] = tenant_id
                 bucket, name = File2DocumentService.get_storage_address(doc_id=doc["id"])
-                queue_tasks(doc, bucket, name)
+                queue_tasks(doc, bucket, name, 0)
 
         return get_json_result(data=True)
     except Exception as e:

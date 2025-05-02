@@ -1,4 +1,4 @@
-import LLMSelect from '@/components/llm-select';
+import { NextLLMSelect } from '@/components/llm-select';
 import { MessageHistoryWindowSizeFormField } from '@/components/message-history-window-size-item';
 import { PromptEditor } from '@/components/prompt-editor';
 import {
@@ -33,7 +33,7 @@ const GenerateForm = ({ form }: INextOperatorForm) => {
                 {t('chat.model')}
               </FormLabel>
               <FormControl>
-                <LLMSelect {...field} />
+                <NextLLMSelect {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -44,7 +44,7 @@ const GenerateForm = ({ form }: INextOperatorForm) => {
           name="prompt"
           render={({ field }) => (
             <FormItem>
-              <FormLabel tooltip={t('knowledgeConfiguration.promptTip')}>
+              <FormLabel tooltip={t('flow.promptTip')}>
                 {t('flow.systemPrompt')}
               </FormLabel>
               <FormControl>
